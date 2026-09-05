@@ -1,0 +1,125 @@
+# =====================================================================
+# DATASET DE 100 VIDEOS INFANTILES: ALTA VS BAJA/MODERADA ESTIMULACIÓN
+# Generado automáticamente por fetch_kids_urls.py
+# =====================================================================
+
+# --- COCOMELON (Alta Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=TIy5Iy6V54E
+https://www.youtube.com/watch?v=bL4drdg-41Y
+https://www.youtube.com/watch?v=vTLfOqEolsk
+https://www.youtube.com/watch?v=7Qfq7vsVWWQ
+https://www.youtube.com/watch?v=enI7IxrqyuM
+https://www.youtube.com/watch?v=MEAR7ENkieM
+https://www.youtube.com/watch?v=wBv_ywwaAfk
+https://www.youtube.com/watch?v=_cmxOYRWYQA
+https://www.youtube.com/watch?v=vFdBQ64gZf4
+https://www.youtube.com/watch?v=O0nV7hJ9qzk
+
+# --- BLIPPI ESPAÑOL (Alta Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=Zr0QijS9vOo
+https://www.youtube.com/watch?v=rEJ0va5dhj4
+https://www.youtube.com/watch?v=zxe758xFsP8
+https://www.youtube.com/watch?v=fzN86301BlM
+https://www.youtube.com/watch?v=a7IWuKiKCQE
+https://www.youtube.com/watch?v=FpyGwiczUGk
+https://www.youtube.com/watch?v=ZjKgD6lWuIY
+https://www.youtube.com/watch?v=8zTXJTrQO7A
+https://www.youtube.com/watch?v=fWi8_aZbfg8
+https://www.youtube.com/watch?v=AIqf1vqT_38
+
+# --- PINKFONG ESPAÑOL (Alta Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=B3ZfSa-_aRk
+https://www.youtube.com/watch?v=zPq2OrrgCkY
+https://www.youtube.com/watch?v=aBDtoXLMSxw
+https://www.youtube.com/watch?v=y31LeqM0JNs
+https://www.youtube.com/watch?v=kq_nsRIbYgU
+https://www.youtube.com/watch?v=q4E-9cn98f8
+https://www.youtube.com/watch?v=9ISoGQqsZeA
+https://www.youtube.com/watch?v=wXGS3AgEOs4
+https://www.youtube.com/watch?v=kWifx4_vvsI
+https://www.youtube.com/watch?v=pvZHkbrbcdE
+
+# --- LOOLOO KIDS ESPAÑOL (Alta Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=WKHpeRz1oOc
+https://www.youtube.com/watch?v=35AIPLe2Jcw
+https://www.youtube.com/watch?v=Tb-D78y-Do0
+https://www.youtube.com/watch?v=7My-mrmPwZg
+https://www.youtube.com/watch?v=41_9ANZvLDE
+https://www.youtube.com/watch?v=M-ZQ6xrmm50
+https://www.youtube.com/watch?v=Iz_9abaqMU8
+https://www.youtube.com/watch?v=zuDwJIs2Qwc
+https://www.youtube.com/watch?v=15jq_b5dH5w
+https://www.youtube.com/watch?v=FlwbvgPdUFU
+
+# --- LITTLE BABY BUM ESPAÑOL (Alta Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=oGtx7RnTP3Y
+https://www.youtube.com/watch?v=tEZQvtL5Jso
+https://www.youtube.com/watch?v=j_AXof2fLXs
+https://www.youtube.com/watch?v=K2vPUtmgpXE
+https://www.youtube.com/watch?v=H4Olvn-I8II
+https://www.youtube.com/watch?v=bm1Pi0fPclY
+https://www.youtube.com/watch?v=Ri5qp6na7yY
+https://www.youtube.com/watch?v=Qj4HqYKJkxM
+https://www.youtube.com/watch?v=mg3EOpsRi7k
+https://www.youtube.com/watch?v=tB-sYK6mdII
+
+# --- BLUEY ESPAÑOL (Baja/Moderada Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=nyKKtzUzvYA
+https://www.youtube.com/watch?v=sa9vZ4LqeCI
+https://www.youtube.com/watch?v=-nnXZ5ER2jI
+https://www.youtube.com/watch?v=o9llFodLSQc
+https://www.youtube.com/watch?v=FKxDeGq2rPI
+https://www.youtube.com/watch?v=5F7dc8KeNfo
+https://www.youtube.com/watch?v=8yiczzKMnGY
+https://www.youtube.com/watch?v=CbZ-alv6-hI
+https://www.youtube.com/watch?v=yquvuc4BNv8
+https://www.youtube.com/watch?v=X0sZbd9WVY0
+
+# --- DANIEL TIGRE ESPAÑOL (Baja/Moderada Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=5xu_EJIwguA
+https://www.youtube.com/watch?v=r1cmhVPF-jE
+https://www.youtube.com/watch?v=RpwdViOQDFA
+https://www.youtube.com/watch?v=Jlptnc59LZ8
+https://www.youtube.com/watch?v=h1SjZmFWyYo
+https://www.youtube.com/watch?v=YHTo9KTeNFM
+https://www.youtube.com/watch?v=vFWTKa7BpJ4
+https://www.youtube.com/watch?v=Q4yVTptgQ5A
+https://www.youtube.com/watch?v=Ki1UfALLmks
+https://www.youtube.com/watch?v=N6QsZJO8AdY
+
+# --- POCOYÓ (Baja/Moderada Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=lUZ2C_La8gM
+https://www.youtube.com/watch?v=9lu5xgcbBN8
+https://www.youtube.com/watch?v=jsNNM3w-Xyk
+https://www.youtube.com/watch?v=ctMNvLuhllY
+https://www.youtube.com/watch?v=EjUPcsL2tNE
+https://www.youtube.com/watch?v=wOnvAgzllW4
+https://www.youtube.com/watch?v=8ONqDtJwiGg
+https://www.youtube.com/watch?v=XFF_5ftPaq8
+https://www.youtube.com/watch?v=PP_xYytbvcg
+https://www.youtube.com/watch?v=IcX7OTdQuW4
+
+# --- PUFFIN ROCK (Baja/Moderada Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=zFK9E2FpMxY
+https://www.youtube.com/watch?v=0JxzhxrnPGU
+https://www.youtube.com/watch?v=W42laLTF8QM
+https://www.youtube.com/watch?v=kclsEQ_KPNI
+https://www.youtube.com/watch?v=0dhQIS9wPvA
+https://www.youtube.com/watch?v=Rj5tiHa2Vp4
+https://www.youtube.com/watch?v=WnLLkEiS-xs
+https://www.youtube.com/watch?v=GNL3dnUiT7c
+https://www.youtube.com/watch?v=yzwhGvyYrnk
+https://www.youtube.com/watch?v=DVIG-uJSAnM
+
+# --- PEPPA PIG ESPAÑOL LATINO (Baja/Moderada Estimulación) [10 videos] ---
+https://www.youtube.com/watch?v=b2ukQ_KUrmo
+https://www.youtube.com/watch?v=xT95mN6dzMU
+https://www.youtube.com/watch?v=jEJ9wBi2jFs
+https://www.youtube.com/watch?v=-kygIX-R6Xc
+https://www.youtube.com/watch?v=CpySYla0JiI
+https://www.youtube.com/watch?v=KoYSd5gz6oc
+https://www.youtube.com/watch?v=qL57q4Y6s34
+https://www.youtube.com/watch?v=4ui_UPcxSKs
+https://www.youtube.com/watch?v=N1vyMJi90WY
+https://www.youtube.com/watch?v=iV1OVlRQDuI
+
