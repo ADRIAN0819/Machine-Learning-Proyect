@@ -1,0 +1,23 @@
+README
+--------
+
+Dataset for paper: Disturbed YouTube for Kids: Characterizing and Detecting Inappropriate Videos Targeting Young Children
+
+The dataset consists of five files:
+1. groundtruth_videos.json: This is the ground truth dataset. We have 4797 manually annotated videos (1513 suitable, 929 disturbing, 419 restricted, and 1936 irrelevant). You can distinguish among the different labels by observing the 'classification_label' field.
+2. elsagate_related_videos.json: Contains the data for 233K elsagate-related YouTube videos (1K seed and 232K recommended) that were obtained as described in the paper.
+3. other_child_related_videos.json: Contains the data for 155K other child-related YouTube videos (2K seed and 153K recommended) that were obtained as described in the paper.
+4. random_videos.json: Contains the data for 482K random YouTube videos (8K seed and 474K recommended) that were obtained as described in the paper.
+5. popular_videos.json: Contains the data for 11K popular YouTube videos (500 seed and 10.5K recommended) that were obtained between November 18 and November 21, 2018, as described in the paper.
+
+For each video in all sets, you can check the predicted label of our classifier by observing the 'prediction' field.
+
+If you find this dataset useful please cite:
+
+@inproceedings{zannettou2018good,
+    title={{Disturbed YouTube for Kids: Characterizing and Detecting Inappropriate Videos Targeting Young Children}},
+    author={Papadamou, Kostantinos and Papasavva, Antonis and Zannettou, Savvas and Blackburn, Jeremy and Kourtellis, Nicolas and Leontiadis, Ilias and Stringhini, Gianluca and Sirivianos, Michael},
+    booktitle={14th International AAAI Conference on Web and Social Media},
+    year={2020},
+    organization={AAAI}
+}

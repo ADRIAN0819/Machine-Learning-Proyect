@@ -3,34 +3,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
 # Virtual Environments
-env/
 venv/
 .venv/
+env/
 ENV/
-env.bak/
-venv.bak/
+
+# Large JSON datasets (>100MB)
+DataSet_Disturbed_YouTube_Kids/*.json
+*.json
+
+# Large consolidated CSV (>1GB)
+dataset_consolidado_completo.csv
 
 # Temporary video & audio media files
 temp_videos/
@@ -47,19 +31,13 @@ extraccion_datos/temp_videos/
 *.ytdl
 *_temp_audio.wav
 
-# Large binaries (FFmpeg is auto-managed)
+# Binary files
 bin/
-extraccion_datos/bin/
 *.exe
 
-# Test / Scratch files
-test_*.csv
+# Logs and OS files
 *.log
-
-# IDEs & OS metadata
-.vscode/
-.idea/
-*.swp
-*.swo
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
