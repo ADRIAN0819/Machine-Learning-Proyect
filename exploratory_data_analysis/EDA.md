@@ -457,7 +457,7 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos, de los cuales 
 
 ## 7. Conclusiones y Recomendaciones
 
-### 6.1 Hallazgos Principales
+### 7.1 Hallazgos Principales
 
 1. **Balance de Clases:** El dataset de entrenamiento presenta un desbalance de clases significativo, con "irrelevant" siendo la clase mayoritaria (1,936 videos; 40.4%). Esto deberá abordarse mediante técnicas de balanceo durante el entrenamiento.
 
@@ -474,7 +474,7 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos, de los cuales 
    - Other Child: 1.5% inapropiado
    - Random: 0.3% inapropiado
 
-### 6.4 Resumen numérico del dataset de entrenamiento
+### 7.2 Resumen numérico del dataset de entrenamiento
 
 - **Videos:** 4,797; **vistas totales:** 29,448,185,127
 - **Media de vistas:** 6,142,717; **media de likes:** 26,878; **media de comentarios:** 2,378
@@ -483,7 +483,7 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos, de los cuales 
 - **Diversidad:** 17 categorías de YouTube, 3,811 canales y 3,705 tags únicos
 - **Definición:** 3,748 videos HD (78.1%) y 1,048 SD (21.8%); un registro no tiene definición
 
-### 6.2 Recomendaciones para el Modelado
+### 7.3 Recomendaciones para el Modelado
 
 1. **Preprocesamiento:**
    - Implementar técnicas de balanceo de clases (SMOTE, class weights, etc.)
@@ -505,7 +505,7 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos, de los cuales 
    - Considerar sistema de revisión humana para casos de baja confianza
    - Monitorear continuamente el performance en datos reales
 
-### 6.3 Limitaciones del Análisis
+### 7.4 Limitaciones del Análisis
 
 1. **Muestra vs Población:** Los datasets adicionales se analizaron solo con muestras de 1,000 videos, lo que puede no representar completamente la distribución real.
 
