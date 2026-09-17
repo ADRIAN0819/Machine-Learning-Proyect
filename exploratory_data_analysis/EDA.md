@@ -276,6 +276,65 @@ Se identificaron **3,705 tags únicos** y **3,914 tags en total** contando repet
 - La longitud del título podría ser un feature discriminante
 - "restricted" presenta los títulos más cortos en promedio, mientras que "irrelevant" tiene más observaciones
 
+### 4.9 Detección de Outliers
+
+Se aplicó el método del rango intercuartílico (IQR) sobre las cinco variables numéricas (`view_count`, `like_count`, `dislike_count`, `comment_count`, `duration_seconds`), tanto en su escala original como sobre una transformación logarítmica (`log1p`). Esta segunda versión es necesaria porque, dada la fuerte asimetría de las métricas de engagement (ver Tabla 2), el IQR calculado en escala original marca como "outlier" a una fracción muy grande de las observaciones, lo cual no es informativo.
+
+![Boxplots de Outliers](images/outliers_boxplots_groundtruth.png)
+
+**Tabla 12: Outliers detectados por variable (método IQR)**
+
+| Variable | N° Outliers (escala original) | % Outliers (original) | N° Outliers (escala log) | % Outliers (log) |
+|----------|-------------------------------:|-----------------------:|---------------------------:|-------------------:|
+| view_count | 802 | 16.73% | 0 | 0.00% |
+| like_count | 730 | 15.64% | 0 | 0.00% |
+| dislike_count | 791 | 16.94% | 0 | 0.00% |
+| comment_count | 721 | 15.78% | 0 | 0.00% |
+| duration_seconds | 385 | 8.03% | 173 | 3.61% |
+
+**Observaciones:**
+- En escala original, el IQR detecta una alta cantidad de "outliers" en las variables de engagement (entre 15.6% y 16.9%, superando los 700 videos en cada una) debido a la asimetría extrema y cola pesada típica de YouTube (ver máximos en Tabla 2).
+- En escala logarítmica (`log1p`), el número de outliers en las cuatro variables de engagement desciende a **0 (0.00%)**, demostrando que las observaciones siguen una distribución log-normal coherente y no constituyen errores ni datos anómalos. Únicamente `duration_seconds` retiene 173 outliers (3.61%) correspondientes a videos notablemente cortos o largos.
+- Al cruzar los valores extremos de `view_count` (> 4.4M) y `like_count` (> 25.3K) con `classification_label`, se observa que están repartidos entre todas las clases (en vistas: 379 suitable, 175 irrelevant, 132 restricted y 116 disturbing; en likes: 300 irrelevant, 214 suitable, 121 disturbing y 95 restricted). Por ende, corresponden a contenido popular legítimo dentro de cada categoría y no deben descartarse, sino normalizarse o transformarse mediante log1p en la Etapa 2.
+
+### 4.10 Cuantificación del Desbalance de Clases
+
+Complementando la distribución de clases de la Sección 4.1, se calculó el ratio de desbalance (*imbalance ratio*, IR) de cada clase respecto a la clase mayoritaria (`irrelevant`).
+
+**Tabla 13: Ratio de desbalance por clase**
+
+| Categoría | Cantidad | IR respecto a "irrelevant" |
+|-----------|---------:|----------------------------:|
+| Irrelevant | 1,936 | 1.00x |
+| Suitable | 1,513 | 1.28x |
+| Disturbing | 929 | 2.08x |
+| Restricted | 419 | 4.62x |
+
+**Observaciones:**
+- La clase `restricted`, la más relevante para detectar contenido de mayor riesgo, es 4.6 veces más pequeña que la clase mayoritaria.
+- Este nivel de desbalance (IR > 4x en la clase minoritaria) justifica el uso de técnicas específicas en la Etapa 2: class weights, sobremuestreo (SMOTE) o una combinación de ambas, tal como se planteó en la propuesta de próximos pasos.
+
+### 4.11 Relaciones entre Variables (Análisis de Correlación)
+
+Se analizó la correlación entre las variables numéricas (Pearson en escala original, Pearson en escala log1p y Spearman) para identificar redundancia y posibles problemas de multicolinealidad de cara al feature engineering de la Etapa 2. Adicionalmente, se aplicó la prueba de Kruskal-Wallis para evaluar si la distribución de cada variable numérica difiere de forma estadísticamente significativa entre las cuatro categorías de `classification_label`.
+
+![Matriz de Correlación](images/correlacion_variables_groundtruth.png)
+
+**Tabla 14: Resultados de la prueba de Kruskal-Wallis (variable numérica vs. clase)**
+
+| Variable | Estadístico H | p-value | ¿Diferencia significativa entre clases? |
+|----------|---------------:|--------:|:----------------------------------------|
+| view_count | 523.87 | 3.20e-113 | Sí (p < 0.05) |
+| like_count | 232.61 | 3.76e-50 | Sí (p < 0.05) |
+| dislike_count | 399.39 | 3.00e-86 | Sí (p < 0.05) |
+| comment_count | 150.65 | 1.91e-32 | Sí (p < 0.05) |
+| duration_seconds | 129.94 | 5.57e-28 | Sí (p < 0.05) |
+
+**Observaciones:**
+- Las métricas de engagement presentan una correlación excepcionalmente alta entre sí (especialmente en Spearman y escala logarítmica): `view_count` y `dislike_count` (Spearman = 0.966, Pearson log = 0.940), `view_count` y `like_count` (Spearman = 0.956, Pearson log = 0.955), y `like_count` y `comment_count` (Spearman = 0.948, Pearson log = 0.947). Esta colinealidad casi unitaria desaconseja emplear los cuatro conteos como variables directas simultáneas; en su lugar, se deben formular ratios normalizados (likes/views, comments/views) según lo planificado para el feature engineering.
+- Por su parte, `duration_seconds` mantiene correlaciones bajas con todas las variables de engagement (Pearson log entre 0.228 y 0.241, Spearman entre 0.217 y 0.225), por lo que provee una señal complementaria e independiente.
+- En la prueba no paramétrica de Kruskal-Wallis, **las 5 variables numéricas** resultaron estadísticamente significativas ($p < 0.05$, de hecho todas con $p < 10^{-27}$), indicando que sus distribuciones difieren entre las cuatro clases. No obstante, dado el tamaño muestral amplio (~4,800 observaciones), diferencias distributivas pequeñas pueden alcanzar significancia estadística con facilidad; por ello, este resultado funciona como un filtro preliminar positivo (ninguna variable se descarta a priori), debiendo confirmarse su verdadera capacidad predictiva en la Etapa 2 mediante métricas de importancia de features con los modelos entrenados.
+
 ---
 
 ## 5. Análisis de Datasets Adicionales (Muestras)
@@ -354,7 +413,49 @@ La muestra contiene 490 videos con ground truth (seeds) y 1,000 videos con predi
 
 ---
 
-## 6. Conclusiones y Recomendaciones
+## 6. Análisis de Posible Fuga de Datos (Data Leakage)
+
+Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el diseño experimental de la Etapa 2:
+
+### 6.1 Columnas que codifican la etiqueta o la predicción original
+
+El dataset incluye las columnas `prediction` e `is_ground_truth`, generadas por el clasificador automático de los autores del dataset y por el proceso de anotación, respectivamente. **Ninguna de las dos debe usarse como feature**: no son información disponible de forma independiente para un video nuevo, sino subproductos del propio proceso de etiquetado/clasificación original. Se verificó su presencia y valores en `dataset_groundtruth.csv` mediante el notebook: `prediction` contiene un 100% de valores nulos (4,797 registros NaN) e `is_ground_truth` toma el valor constante 1 para los 4,797 registros.
+
+### 6.2 Duplicados dentro del ground truth
+
+Se verificó la existencia de `video_id` duplicados dentro de `dataset_groundtruth.csv`. De existir duplicados, deben resolverse antes de hacer el split train/validation/test (quedarse con un único registro por video), ya que un mismo video repetido en train y en validation infla artificialmente el desempeño reportado.
+
+Tras la ejecución del notebook, se constató que existen **0 videos duplicados** (mismo `video_id`) dentro del dataset de entrenamiento. Todos los 4,797 registros representan videos únicos.
+
+### 6.3 Solapamiento entre ground truth y datasets adicionales
+
+Se comparó el conjunto de `video_id` de `dataset_groundtruth.csv` contra los `video_id` presentes en las muestras de `elsagate_related`, `other_child_related`, `random_videos` y `popular_videos`. Esto es relevante porque el plan de trabajo (Sección de "Próximos pasos") usa el ground truth para entrenar y estos datasets adicionales para evaluar: si un mismo video aparece en ambos conjuntos, la evaluación sobre ese video dejaría de ser una prueba genuina de generalización.
+
+**Tabla 15: Videos en común entre ground truth y cada dataset adicional (sobre la muestra de 1,000)**
+
+| Dataset adicional | Videos en común con ground truth |
+|--------------------|-----------------------------------:|
+| elsagate_related | 780 (78.0%) |
+| other_child_related | 70 (7.0%) |
+| random_videos | 34 (3.4%) |
+| popular_videos | 490 (49.0%) |
+
+### 6.4 Concentración de videos por canal
+
+Se analizó cuántos videos del ground truth provienen del mismo `channel_id`, y si los canales con más videos tienden a concentrarse en una sola clase. Si esto ocurre, existe riesgo de que un modelo "memorice" características propias del canal (estilo de miniatura, patrones de título recurrentes del mismo uploader) en lugar de aprender patrones generalizables de contenido inapropiado — y ese riesgo se convierte en fuga de datos real si videos del mismo canal quedan repartidos entre train y validation/test.
+
+Al ejecutar el análisis, se identificaron 3,818 canales únicos, de los cuales **418 canales tienen más de un video** en el ground truth (con un máximo de 33 videos para un canal). Al inspeccionar la distribución de clases en el top 10 de canales con más videos, **9 de los 10 canales concentran el 100% de sus videos en una única categoría** (todos en `suitable`), y solo 1 canal (`UC9-oOzriEPfpPvjTOAu3Cww`, 33 videos) presenta mezcla de clases (20 `disturbing` y 13 `suitable`). Esto demuestra una fuerte concentración por canal y ratifica el riesgo de sobreajuste/fuga si no se controla adecuadamente.
+
+### 6.5 Recomendaciones derivadas
+
+- Excluir `prediction` e `is_ground_truth` de las features de entrenamiento.
+- Eliminar duplicados de `video_id` en el ground truth antes del split, si los hubiera.
+- Excluir de la evaluación en datasets adicionales cualquier video cuyo `video_id` ya esté en el ground truth de entrenamiento.
+- Si hay concentración fuerte de clase por canal, usar un split agrupado por canal (por ejemplo `GroupShuffleSplit`) además de la estratificación por clase planteada en el plan de preprocesamiento, para que videos de un mismo canal no queden repartidos entre train y validation/test.
+
+---
+
+## 7. Conclusiones y Recomendaciones
 
 ### 6.1 Hallazgos Principales
 
@@ -416,7 +517,7 @@ La muestra contiene 490 videos con ground truth (seeds) y 1,000 videos con predi
 
 ---
 
-## 7. Próximos Pasos
+## 8. Próximos Pasos
 
 1. **Feature Engineering Avanzado:** Implementar técnicas de NLP para análisis de títulos, descripciones y tags.
 
@@ -430,7 +531,7 @@ La muestra contiene 490 videos con ground truth (seeds) y 1,000 videos con predi
 
 ---
 
-## 8. Referencias
+## 9. Referencias
 
 - Dataset original: "Disturbed YouTube for Kids: Characterizing and Detecting Inappropriate Videos Targeting Young Children"
 - Documentación de YouTube Data API v3
