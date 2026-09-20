@@ -7,23 +7,111 @@
 
 ---
 
-## 1. Introducción
+## 1. Introducción y Formulación del Problema
 
 Este informe presenta el análisis exploratorio de datos (EDA) realizado sobre el dataset "Disturbed YouTube for Kids", el cual contiene videos de YouTube clasificados según su apropiación para niños pequeños. El objetivo principal de este análisis es comprender la estructura, distribución y características de los datos para el posterior entrenamiento de un modelo de machine learning capaz de detectar automáticamente contenido inapropiado.
 
-El fenómeno de "Elsagate" se refiere a videos en YouTube que, a primera vista, parecen apropiados para niños (personajes conocidos, colores brillantes, música infantil) pero contienen contenido perturbador o inapropiado. Este dataset busca caracterizar y detectar este tipo de contenido.
+### 1.1 Descripción y motivación del problema
+
+El acceso de niños pequeños a plataformas de video como YouTube es masivo y creciente. Actualmente se suben más de 500 horas de video por minuto a YouTube, lo que ilustra la escala del contenido disponible (Brandwatch, 2026). Aunque existe una gran cantidad de videos dirigidos al público infantil, muchos materiales con apariencia infantil contienen escenas o temas inadecuados: violencia, lenguaje ofensivo, sexualización o imágenes perturbadoras. Este problema fue identificado como **Elsagate**, donde videos con personajes de dibujos animados populares (Peppa Pig, Spider-Man, Elsa, etc.) mostraban situaciones grotescas u obscenas dirigidas a niños de 2 a 6 años (United States Cybersecurity Magazine, s. f.). Estas producciones emplean entornos coloridos y palabras clave infantiles, pero en realidad incluyen contenidos potencialmente dañinos o perturbadores para los niños, como mutilaciones, inyecciones o escenas de miedo (United States Cybersecurity Magazine, s. f.).
+
+Debido al enorme flujo de contenido, con miles de millones de videos subidos y cientos de miles nuevos cada día, la revisión humana exhaustiva es inviable. Plataformas como YouTube han empezado a usar aprendizaje automático para ayudar en la moderación de contenidos y aplicar restricciones de edad automáticamente (YouTube, 2020). En este contexto, se propone desarrollar un modelo de aprendizaje supervisado capaz de detectar y clasificar automáticamente videos potencialmente inapropiados para niños en YouTube, usando sus metadatos y textos asociados.
+
+El proyecto dispone de un conjunto de datos de referencia con 4,797 videos etiquetados manualmente en cuatro clases: `suitable`, `disturbing`, `restricted` e `irrelevant` (Papadamou et al., 2020a), cuyas definiciones se detallan en la Sección 2.3. Además, se cuenta con un corpus más amplio para extender el análisis a gran escala. El análisis exploratorio de los datos revela patrones en títulos, etiquetas, duración, categorías de YouTube y métricas de interacción que diferencian parcialmente estas clases. El principal desafío del proyecto es distinguir contenido infantil legítimo de aquellos videos engañosos que, bajo apariencia de material infantil (personajes conocidos, colores, juguetes), ocultan elementos inadecuados (United States Cybersecurity Magazine, s. f.). Esta tarea es compleja porque los creadores malintencionados pueden modificar ligeramente el contenido y las plataformas públicas evolucionan continuamente.
+
+La motivación del proyecto combina varios factores clave:
+
+- Alto volumen de contenido infantil en YouTube, lo que hace prácticamente imposible su supervisión manual total.
+- Dificultad para filtrar videos engañosos que parecen inocuos pero contienen material perturbador.
+- Necesidad de herramientas automáticas que asistan la identificación y clasificación de videos para niños.
+- Importancia social de proteger a los niños de contenidos inapropiados y facilitar el trabajo de padres, tutores y plataformas.
+
+El objetivo es crear una herramienta de apoyo que agilice la detección de videos sospechosos, analice volúmenes masivos de información y contribuya a una clasificación más eficiente. No se busca reemplazar la supervisión humana, sino ayudarla haciendo más rápida y precisa la preclasificación de contenido potencialmente problemático.
+
+### 1.2 Objetivos del proyecto
+
+**Objetivo general.** Desarrollar un modelo de aprendizaje supervisado que clasifique automáticamente videos de YouTube según su idoneidad para niños pequeños (`suitable`, `irrelevant`, `restricted`, `disturbing`) a partir de sus metadatos, como herramienta de apoyo a la moderación de contenido.
+
+**Objetivos específicos.**
+1. Caracterizar el dataset *Disturbed YouTube for Kids* mediante un análisis exploratorio: estructura, valores faltantes, outliers, desbalance de clases, relaciones entre variables y riesgos de fuga de datos.
+2. Diseñar el preprocesamiento y la ingeniería de características a partir del texto y de las métricas de interacción.
+3. Entrenar y comparar un baseline y al menos dos enfoques de modelado, con una validación que agrupe por canal.
+4. Evaluar el desempeño con métricas apropiadas para clases desbalanceadas, con énfasis en el recall de `disturbing` y `restricted`, y analizar los errores.
+5. Comprobar la consistencia de las predicciones del modelo sobre los conjuntos adicionales, que no tienen etiquetas humanas fuera del ground truth.
+
+### 1.3 Definición de la tarea de Machine Learning
+
+Se plantea un modelo de aprendizaje supervisado que, a partir de los metadatos y textos asociados a cada video, prediga su clase de adecuación para niños. Para cada video $v$ se define un vector de características $\mathbf{x}_v$ construido a partir de sus metadatos (título, descripción, etiquetas, categoría, duración, calidad, visualizaciones, likes, dislikes y comentarios), que representan distintos aspectos del video:
+
+- **Texto asociado:** título, descripción y etiquetas (tags).
+- **Categoría:** categoría de YouTube (por ejemplo, Educación o Entretenimiento).
+- **Características del video:** duración y calidad de la imagen (definición).
+- **Métricas de interacción:** visualizaciones, likes, dislikes y comentarios, que reflejan la popularidad y la respuesta del público.
+
+El identificador y el nombre del canal **no** se incluyen como características, para evitar que el modelo memorice rasgos propios de cada canal (ver Sección 6.4); el canal se usa únicamente para agrupar la partición de los datos.
+
+A partir de estas características, el modelo aprenderá una función de predicción. Formalmente, la tarea se expresa como:
+
+$$\hat{y}_v = f(\mathbf{x}_v)$$
+
+donde $\hat{y}_v \in \mathcal{Y}$ es la clase predicha para el video $v$, con $\mathcal{Y} = \{\text{suitable}, \text{disturbing}, \text{restricted}, \text{irrelevant}\}$, y $f\colon \mathbb{R}^n \to \mathcal{Y}$ opera sobre las características ya vectorizadas. El modelo buscará que $\hat{y}_v$ coincida con la etiqueta real $y_v$ del conjunto de entrenamiento. Inicialmente se aborda como un problema de **clasificación multiclase supervisada**, dado que se cuenta con etiquetas manuales.
+
+Para entrenar el modelo se emplean los 4,797 videos etiquetados. La función $f$ puede implementarse con distintos algoritmos de clasificación (por ejemplo, regresión logística multiclase, árboles de decisión, ensamblajes o redes neuronales). El modelo entrenado se evaluará en un conjunto de prueba independiente, reservado del ground truth. Se prestará especial atención al desempeño en las clases `disturbing` y `restricted`, ya que clasificar erróneamente estos videos como seguros tendría consecuencias más graves.
+
+Como alternativa a la clasificación multiclase, también se explorará la idea de predecir un puntaje continuo de nivel de inapropiación (por ejemplo, entre 0 y 1). En este caso, la función $f$ sería de regresión y podría formularse como $y_v \in [0,1]$ en lugar de asignar categorías discretas. Sin embargo, inicialmente se implementará la tarea como clasificación para ajustarse a las etiquetas disponibles.
+
+Los pasos generales del pipeline serán:
+
+1. Extracción automática de características $\mathbf{x}_v$ de cada video (a partir de metadatos y texto).
+2. Preprocesamiento y normalización de datos.
+3. Entrenamiento del modelo de aprendizaje supervisado con las etiquetas conocidas.
+4. Evaluación con validación cruzada y en el conjunto de prueba separado.
+5. Análisis de resultados (matriz de confusión, métricas) y ajuste de parámetros según corresponda.
+
+Adicionalmente, aunque la tarea principal se centra en metadatos, se podría considerar como extensión la incorporación de características audiovisuales extraídas directamente del contenido (por ejemplo, tasa de cambios de escena, movimiento, estadísticas de audio). Esto podría enriquecer el análisis, pero representa un esfuerzo adicional significativo, por lo que por ahora se priorizan las fuentes de información más accesibles: texto, etiquetas y métricas del video.
+
+Las métricas elegidas para evaluar el desempeño son:
+
+- **Exactitud (accuracy):** proporción de videos correctamente clasificados.
+- **Precisión y exhaustividad (recall) por clase:** en particular en `disturbing` y `restricted`, que miden la capacidad de identificar correctamente videos problemáticos.
+- **Puntuación F1:** media armónica entre precisión y recall, para balancear ambos indicadores.
+- **Matriz de confusión:** para visualizar patrones de error entre clases.
+
+### 1.4 Preguntas de investigación e hipótesis
+
+Se plantean las siguientes preguntas de investigación, cada una con su hipótesis:
+
+**Pregunta 1 (central):** ¿Es posible predecir si un video dirigido al público infantil es apropiado, perturbador o restringido utilizando únicamente metadatos (título, descripción, tags), duración y métricas de interacción (vistas, likes, comentarios), sin necesidad de procesar el video o el audio directamente?
+
+- **Hipótesis 1:** las señales textuales y de interacción contienen información suficiente para distinguir entre clases con un desempeño claramente superior al de un modelo base ingenuo (por ejemplo, uno que siempre prediga la clase mayoritaria, `irrelevant`).
+
+**Pregunta 2 (generalización):** excluyendo los videos que ya forman parte del ground truth de entrenamiento (para evitar fuga de datos), ¿qué proporción de los videos nuevos de `elsagate_related`, un escenario de alto riesgo, predice el modelo como inapropiados, y qué tan consistente es con la predicción del clasificador original de los autores?
+
+- **Hipótesis 2:** como fuera del ground truth el clasificador original predijo como inapropiado solo 1 de 220 videos de las primeras 1,000 líneas de este conjunto (ver Sección 5.1), se espera que el modelo también prediga una proporción baja, y las discrepancias se revisarán de forma cualitativa.
+
+**Pregunta 3 (comprobación de consistencia):** excluidos los solapamientos con el ground truth, ¿mantiene el modelo una proporción baja de videos predichos como inapropiados en `other_child_related`, `random_videos` y `popular_videos`, donde el clasificador original no predijo ninguno fuera del ground truth?
+
+- **Hipótesis 3:** se espera una proporción baja y coherente con la del clasificador original, aunque podría aumentar levemente por el cambio de distribución entre conjuntos.
+
+Como fuera del ground truth no existen etiquetas humanas, las preguntas 2 y 3 se responden como comprobaciones de consistencia y no como medidas de recall o de tasa de falsos positivos (ver Secciones 5 y 8).
 
 ---
 
 ## 2. Descripción del Dataset
 
-### 2.1 Estructura General
+### 2.1 Fuente y Estructura General
 
-El dataset se compone de dos tipos de archivos:
+El dataset utilizado proviene de Papadamou et al. (2020a), "Disturbed YouTube for Kids: Characterizing and Detecting Inappropriate Videos Targeting Young Children", presentado en la 14th International AAAI Conference on Web and Social Media (ICWSM 2020) y publicado en Zenodo (Papadamou et al., 2020b). Los datos fueron recolectados mediante la YouTube Data API (Google, s. f.) y consisten en metadatos de video, no en el contenido audiovisual en sí.
+
+El equipo trabaja con tres formas del mismo dataset:
+
+- `dataset_groundtruth.csv`: versión tabular del ground truth, fuente principal de entrenamiento y de evaluación formal.
+- `dataset_consolidado_parts/`: 844,702 videos únicos, particionados en 10 archivos `.csv.gz`, que integran los datasets adicionales.
+- Archivos JSON crudos comprimidos: formato original de la API, previo a la conversión a CSV. El análisis breve de los datasets adicionales de este informe se realizó sobre estos archivos.
 
 **Dataset Anotado (Ground Truth):**
 - **Archivo:** `dataset_groundtruth.csv`
-- **Total de videos:** 4,797 videos
+- **Total de videos:** 4,797 videos, sin duplicados (verificado por `video_id` único), y 22 variables
 - **Etiquetado:** 100% manual por humanos
 - **Propósito:** Entrenamiento y evaluación formal (split train/test y validación cruzada)
 
@@ -34,33 +122,47 @@ El dataset se compone de dos tipos de archivos:
 - **popular_videos:** ~11K videos (archivo único comprimido)
 - **Propósito:** Comprobación de consistencia y predicciones con el modelo entrenado (sin etiquetas humanas, salvo los videos que ya están en el ground truth)
 
-### 2.2 Variables Principales
+### 2.2 Variables y Tipos de Datos
 
-El dataset contiene las siguientes variables principales:
+El `dataset_groundtruth.csv` contiene 22 variables. La siguiente tabla indica el tipo de dato y el número de valores faltantes de cada una:
 
-**Variables de Identificación:**
-- `video_id`: Identificador único del video en YouTube
-- `title`: Título del video
-- `channel_id`: Identificador del canal
-- `channel_title`: Nombre del canal
+**Tabla 0: Variables del dataset de ground truth (4,797 videos)**
 
-**Variables de Contenido:**
-- `description`: Descripción del video
-- `tags`: Etiquetas asociadas al video
-- `category_id`: Categoría de YouTube
-- `duration_seconds`: Duración en segundos
-- `definition`: Calidad de video (hd, sd, etc.)
+| Variable | Tipo | Faltantes | Descripción |
+|----------|------|----------:|-------------|
+| `video_id` | texto (identificador) | 0 | ID único del video |
+| `title` | texto | 0 | Título del video |
+| `description` | texto | 506 | Descripción del video |
+| `channel_id` | texto (identificador) | 0 | ID único del canal |
+| `channel_title` | texto | 0 | Nombre del canal |
+| `published_at` | fecha y hora (ISO 8601) | 0 | Fecha de publicación |
+| `category_id` | categórica (17 valores) | 0 | Categoría de YouTube |
+| `tags` | texto (lista) | 883 | Etiquetas asociadas al video |
+| `duration_iso` | texto (ISO 8601, ej. PT2M30S) | 1 | Duración en el formato original |
+| `duration_seconds` | numérica (float) | 1 | Duración en segundos |
+| `definition` | categórica (hd/sd) | 1 | Calidad del video (78.1% hd, 21.8% sd) |
+| `caption` | booleana | 1 | Si el video tiene subtítulos |
+| `licensed_content` | booleana | 1 | Si el contenido tiene licencia comercial |
+| `view_count` | numérica (float) | 3 | Número de visualizaciones |
+| `like_count` | numérica (float) | 128 | Número de likes |
+| `dislike_count` | numérica (float) | 128 | Número de dislikes |
+| `comment_count` | numérica (float) | 228 | Número de comentarios |
+| `favorite_count` | numérica (float) | 0 | Número de favoritos (YouTube ya no lo usa desde 2015) |
+| `classification_label` | categórica (4 clases) | 0 | **Variable objetivo** |
+| `prediction` | categórica | 4,797 (100%) | Predicción del clasificador original de los autores |
+| `is_ground_truth` | booleana (constante = 1) | 0 | Confirma que el registro proviene de anotación manual |
+| `source_dataset` | categórica (constante = "groundtruth") | 0 | Origen del registro |
 
-**Variables de Engagement:**
-- `view_count`: Número de visualizaciones
-- `like_count`: Número de likes
-- `dislike_count`: Número de dislikes
-- `comment_count`: Número de comentarios
+### 2.3 Variable Objetivo
 
-**Variables de Clasificación:**
-- `classification_label`: Etiqueta manual (ground truth)
-- `prediction`: Predicción automática del clasificador
-- `is_ground_truth`: Indicador de etiqueta manual
+La variable objetivo es `classification_label`, que asigna a cada video una de cuatro clases, definidas por los autores del dataset según el tipo de contenido y su público objetivo:
+
+- **Suitable (apto):** contenido apropiado para niños de 1 a 5 años y relevante para sus intereses (caricaturas, canciones infantiles, videos educativos).
+- **Disturbing (perturbador):** videos dirigidos a este mismo público, pero que contienen elementos inapropiados (insinuaciones sexuales, lenguaje abusivo, violencia gráfica, escenas de miedo, etc.); es el caso central del fenómeno Elsagate.
+- **Restricted (restringido):** contenido no dirigido a niños pequeños, pero inapropiado para menores de 17 años en general (violencia explícita, lenguaje inapropiado, contenido sexual, consumo de drogas o alcohol).
+- **Irrelevant (no relevante):** contenido apropiado pero no dirigido a niños pequeños (por ejemplo, videos de videojuegos o música dirigidos a públicos mayores).
+
+Esta clasificación no equivale directamente a una escala binaria "apto/no apto": `suitable` e `irrelevant` son ambos apropiados (solo difieren en el público al que apuntan), mientras que `disturbing` y `restricted` representan contenido problemático. La distribución de clases, obtenida mediante anotación manual por revisores humanos, se presenta en la Sección 4.1. Esta variable fue elegida como objetivo porque es la única etiqueta verificada por humanos en el dataset (a diferencia de `prediction`, que proviene de un clasificador externo) y porque responde directamente a la pregunta de investigación central del proyecto.
 
 ---
 
@@ -112,8 +214,8 @@ El dataset de entrenamiento contiene 4,797 videos distribuidos en 4 categorías:
 
 | Variable | Datos válidos | Media | Desv. estándar | Mínimo | P25 | Mediana | P75 | Máximo |
 |----------|---------------:|------:|---------------:|-------:|----:|--------:|----:|-------:|
-| view_count | 4,794 | 6,142,717.00 | 43,836,540.00 | 0 | 1,140 | 90,093.50 | 1,775,453 | 1,664,660,000 |
-| like_count | 4,669 | 26,878.13 | 155,478.80 | 0 | 10 | 502.00 | 10,122 | 4,392,637 |
+| view_count | 4,794 | 6,142,716.96 | 43,836,538.05 | 0 | 1,140 | 90,093.50 | 1,775,452.75 | 1,664,660,083 |
+| like_count | 4,669 | 26,878.13 | 155,478.81 | 0 | 10 | 502.00 | 10,122 | 4,392,637 |
 | dislike_count | 4,669 | 3,718.92 | 25,425.08 | 0 | 1 | 53.00 | 1,097 | 1,071,513 |
 | comment_count | 4,569 | 2,378.41 | 12,849.85 | 0 | 1 | 49.00 | 763 | 323,267 |
 | duration_seconds | 4,796 | 752.06 | 1,986.99 | 0 | 167 | 345.50 | 706.25 | 39,433 |
@@ -128,14 +230,16 @@ El dataset de entrenamiento contiene 4,797 videos distribuidos en 4 categorías:
 
 ![Distribución de Engagement por Categoría](images/distrib_engagement_clases_groundtruth.png)
 
+> **Nota sobre la escala:** En escala logarítmica, los valores iguales a 0 no se representan gráficamente (11 videos con 0 vistas, 468 con 0 likes, 996 con 0 comentarios y 10 con duración 0).
+
 **Tabla 3: `view_count` por categoría**
 
 | Categoría | Datos válidos | Media | Mediana | Desv. estándar | Mínimo | Máximo |
 |-----------|---------------:|------:|--------:|---------------:|-------:|-------:|
-| Disturbing | 929 | 3,193,286.59 | 39,144 | 15,452,148.11 | 0 | 341,629,900 |
-| Irrelevant | 1,934 | 3,486,723.52 | 10,436 | 29,164,201.75 | 0 | 699,895,100 |
-| Restricted | 419 | 8,272,591.13 | 1,348,394 | 21,829,769.40 | 1 | 194,569,100 |
-| Suitable | 1,512 | 10,761,959.60 | 407,330 | 68,498,396.60 | 0 | 1,664,660,000 |
+| Disturbing | 929 | 3,193,286.59 | 39,144 | 15,452,148.11 | 0 | 341,629,926 |
+| Irrelevant | 1,934 | 3,486,723.52 | 10,436 | 29,164,201.75 | 0 | 699,895,118 |
+| Restricted | 419 | 8,272,591.13 | 1,348,394 | 21,829,769.40 | 1 | 194,569,144 |
+| Suitable | 1,512 | 10,761,959.60 | 407,330 | 68,498,396.60 | 0 | 1,664,660,083 |
 
 **Tabla 3.1: `like_count` por categoría**
 
@@ -164,14 +268,39 @@ El dataset de entrenamiento contiene 4,797 videos distribuidos en 4 categorías:
 
 ![Distribución de Categorías por Etiqueta](images/distrib_categ_etiqueta_groundtruth.png)
 
+**Tabla 3.3: Distribución de las 17 categorías de YouTube en el dataset**
+
+| ID | Categoría | Número de videos | % del total |
+|---:|:---|---:|---:|
+| 24 | Entertainment | 1,223 | 25.5% |
+| 22 | People & Blogs | 1,088 | 22.7% |
+| 1 | Film & Animation | 815 | 17.0% |
+| 20 | Gaming | 365 | 7.6% |
+| 27 | Education | 291 | 6.1% |
+| 10 | Music | 266 | 5.5% |
+| 23 | Comedy | 220 | 4.6% |
+| 26 | Howto & Style | 114 | 2.4% |
+| 25 | News & Politics | 106 | 2.2% |
+| 17 | Sports | 97 | 2.0% |
+| 2 | Autos & Vehicles | 55 | 1.1% |
+| 28 | Science & Technology | 53 | 1.1% |
+| 19 | Travel & Events | 39 | 0.8% |
+| 15 | Pets & Animals | 29 | 0.6% |
+| 29 | Nonprofits & Activism | 25 | 0.5% |
+| 43 | Shows | 10 | 0.2% |
+| 44 | Trailers | 1 | <0.1% |
+| **Total** | | **4,796** | **100.0%** |
+
 **Análisis:**
-- Las categorías más frecuentes corresponden a contenido infantil y entretenimiento
-- Se observa una diversidad de categorías, lo que indica que el dataset abarca diferentes tipos de contenido
-- Algunas categorías predominan en ciertas clases de clasificación
+- Las tres categorías más frecuentes de la YouTube Data API son Entertainment (1,223 videos; 25.5%), People & Blogs (1,088 videos; 22.7%) y Film & Animation (815 videos; 17.0%), concentrando en conjunto el 65.2% del dataset.
+- Se observa una diversidad de 17 categorías oficiales en total, abarcando desde canales de entretenimiento masivo hasta categorías de muy baja frecuencia como Shows (10 videos) y Trailers (1 video).
+- Algunas categorías predominan en ciertas clases de clasificación: por ejemplo, Film & Animation concentra una alta proporción de videos clasificados como "suitable", mientras que Entertainment y People & Blogs se distribuyen de forma heterogénea entre todas las clases.
 
 ### 4.5 Análisis de Duración de Videos
 
 ![Distribución de Duración](images/distrib_duracion_groundtruth.png)
+
+> **Nota sobre los límites de los gráficos:** El histograma está truncado a 60 minutos (135 videos superan este límite y no se muestran); el boxplot de la derecha tiene el eje Y limitado a 45 minutos (192 videos superan los 45 minutos y no aparecen en el gráfico), y los 10 videos con duración 0 tampoco se grafican en la escala logarítmica.
 
 **Tabla 4: Estadísticas de Duración por Categoría (segundos)**
 
@@ -480,7 +609,7 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos (por `channel_i
 ### 7.2 Resumen numérico del dataset de entrenamiento
 
 - **Videos:** 4,797; **vistas totales:** 29,448,185,127
-- **Media de vistas:** 6,142,717; **media de likes:** 26,878; **media de comentarios:** 2,378
+- **Media de vistas:** 6,142,716.96; **media de likes:** 26,878.13; **media de comentarios:** 2,378.41
 - **Duración:** media de 752.06 segundos (12.5 minutos) y mediana de 345.5 segundos (5.8 minutos)
 - **Título:** media de 53.7 caracteres y 9.3 palabras
 - **Diversidad:** 17 categorías de YouTube, 3,818 canales (por `channel_id`; 3,811 por `channel_title`), 40,096 tags individuales limpios (36,750 normalizados a minúsculas; 3,705 listas distintas)
@@ -536,5 +665,9 @@ Al ejecutar el análisis, se identificaron 3,818 canales únicos (por `channel_i
 
 ## 9. Referencias
 
-- Dataset original: "Disturbed YouTube for Kids: Characterizing and Detecting Inappropriate Videos Targeting Young Children"
-- Documentación de YouTube Data API v3
+- Brandwatch. (2026). *23 YouTube stats and facts you should know*. https://www.brandwatch.com/blog/youtube-stats/
+- Google. (s. f.). *YouTube Data API v3*. https://developers.google.com/youtube/v3
+- Papadamou, K., Papasavva, A., Zannettou, S., Blackburn, J., Kourtellis, N., Leontiadis, I., Stringhini, G., & Sirivianos, M. (2020a). Disturbed YouTube for kids: Characterizing and detecting inappropriate videos targeting young children. *Proceedings of the International AAAI Conference on Web and Social Media, 14*(1), 522–533. https://doi.org/10.1609/icwsm.v14i1.7320
+- Papadamou, K., Papasavva, A., Zannettou, S., Blackburn, J., Kourtellis, N., Leontiadis, I., Stringhini, G., & Sirivianos, M. (2020b). *Dataset for "Disturbed YouTube for kids: Characterizing and detecting inappropriate videos targeting young children"* [Conjunto de datos]. Zenodo. https://doi.org/10.5281/zenodo.3632781
+- United States Cybersecurity Magazine. (s. f.). *ElsaGate: The problem with algorithms*. https://www.uscybersecurity.net/elsagate/
+- YouTube. (2020, 22 de septiembre). *Using technology to more consistently apply age restrictions*. YouTube Blog. https://blog.youtube/news-and-events/using-technology-more-consistently-apply-age-restrictions/
