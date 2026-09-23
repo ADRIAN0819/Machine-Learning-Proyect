@@ -1,4 +1,4 @@
-# 📊 Extractor de Dataset de Estímulo Audiovisual (YouTube -> CSV)
+# Extractor de Dataset de Estímulo Audiovisual (YouTube -> CSV)
 
 Este repositorio contiene un pipeline modular de alto rendimiento en Python para realizar **scraping y análisis cuantitativo de estímulo visual y auditivo** a partir de videos de YouTube.
 
@@ -6,7 +6,7 @@ El objetivo principal es transformar secuencias de video en un **dataset estruct
 
 ---
 
-## ⚡ Optimizaciones de Rendimiento
+## Optimizaciones de Rendimiento
 - **Descarga Parcial Selectiva (`yt-dlp`)**: Solo descarga los primeros 120 segundos (2 minutos) del video en baja resolución (360p o 480p). Esto ahorra hasta un 90% de ancho de banda y almacenamiento en disco.
 - **Procesamiento de Fotogramas Ultrarrápido (`OpenCV`)**: El cálculo del flujo óptico denso (Farneback) y de bordes (Canny) se ejecuta a resolución interna optimizada, alcanzando velocidades superiores a 60-120 FPS.
 - **Gestión Automática de Almacenamiento**: Los archivos de video temporales se eliminan automáticamente tras procesarse para evitar saturar el disco.
@@ -14,7 +14,7 @@ El objetivo principal es transformar secuencias de video en un **dataset estruct
 
 ---
 
-## 🛠️ Instalación y Requisitos
+## Instalación y Requisitos
 
 1. Asegúrate de tener Python 3.10+ instalado.
 2. Instala las dependencias del proyecto:
@@ -27,7 +27,7 @@ py -m pip install -r requirements.txt
 
 ---
 
-## 🚀 Guía de Uso
+## Guía de Uso
 
 ### 1. Extracción Automática de URLs Infantiles (Opcional)
 Si deseas regenerar o actualizar las 100 URLs de videos infantiles (50 de Alta Estimulación vs 50 de Baja/Moderada Estimulación):
@@ -63,7 +63,7 @@ py extraccion_datos/extract_stimulus_dataset.py --urls https://www.youtube.com/w
 
 ---
 
-## 📋 Diccionario de Variables del Dataset
+## Diccionario de Variables del Dataset
 
 ### 1. Dataset Consolidado (`dataset_estimulacion.csv` - 28 columnas)
 
@@ -115,7 +115,7 @@ Muestra la evolución **segundo a segundo** de cada video para identificar patro
 
 ---
 
-## 📂 Estructura del Código
+## Estructura del Código
 
 ```text
 Machine-Learning-Proyect/
