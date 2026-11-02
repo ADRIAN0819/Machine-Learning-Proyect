@@ -34,6 +34,10 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `EDA.md`: Documento consolidado e informe técnico completo del análisis exploratorio.
   * `images/`: Gráficos generados por el notebook principal a escala completa (14 figuras originales).
   * `images_overleaf/`: Gráficos generados para el artículo científico a escala 1:1 IEEE (14 figuras).
+* `data_processing/`: Preprocesamiento y dataset de características v1.
+  * `preprocesamiento_features_v1.ipynb`: Notebook para auditar, transformar e imputar el ground truth.
+  * `preprocessing.py`: Función reutilizable de ingeniería de características y exportación.
+  * `dataset_features_v1.csv`: Features procesadas con etiqueta y metadato de split agrupado por canal.
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
   * `convert_json_to_csv.py`: Script de utilidad para transformar los archivos JSON crudos a formato CSV.
   * `dataset_groundtruth.csv`: Dataset principal anotado manualmente por humanos (4,797 videos, 4 clases).
@@ -131,6 +135,9 @@ pip install -r requirements.txt
 2. **Notebook para el Paper (`exploratory_data_analysis/eda_analysis_overleaf.ipynb`):**
    * Solo es necesario ejecutarlo si se desea regenerar las figuras con escala tipográfica 1:1 adaptadas a columnas de LaTeX/Overleaf (formato IEEE Transactions).
    * Guarda sus resultados en la carpeta `images_overleaf/`.
+3. **Preprocesamiento (`data_processing/preprocesamiento_features_v1.ipynb`):**
+   * Genera `data_processing/dataset_features_v1.csv` desde `dataset_groundtruth.csv`.
+   * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal; `split` es metadato y debe excluirse de las features del modelo.
 
 ---
 
