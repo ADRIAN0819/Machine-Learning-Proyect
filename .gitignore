@@ -41,3 +41,10 @@ bin/
 Thumbs.db
 .vscode/
 .idea/
+
+# Excepciones: archivos JSON pequeños necesarios para reproducir
+!data_processing/imputation_v1.json
+
+# Salidas pesadas de modelado (predicciones por video, modelos entrenados)
+modeling/outputs/
+modeling/models/
