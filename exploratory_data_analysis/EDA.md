@@ -87,11 +87,11 @@ Se plantean las siguientes preguntas de investigación, cada una con su hipótes
 
 **Pregunta 2 (generalización):** excluyendo los videos que ya forman parte del ground truth de entrenamiento (para evitar fuga de datos), ¿qué proporción de los videos nuevos de `elsagate_related`, un escenario de alto riesgo, predice el modelo como inapropiados, y qué tan consistente es con la predicción del clasificador original de los autores?
 
-- **Hipótesis 2:** como fuera del ground truth el clasificador original predijo como inapropiado solo 1 de 220 videos de las primeras 1,000 líneas de este conjunto (ver Sección 5.1), se espera que el modelo también prediga una proporción baja, y las discrepancias se revisarán de forma cualitativa.
+- **Hipótesis 2:** como fuera del ground truth el clasificador original predijo como inapropiados solo 1,260 de 230,873 videos de este conjunto (0.55%; ver Sección 5.5), se espera que el modelo también prediga una proporción baja, y las discrepancias se revisarán de forma cualitativa.
 
-**Pregunta 3 (comprobación de consistencia):** excluidos los solapamientos con el ground truth, ¿mantiene el modelo una proporción baja de videos predichos como inapropiados en `other_child_related`, `random_videos` y `popular_videos`, donde el clasificador original no predijo ninguno fuera del ground truth?
+**Pregunta 3 (comprobación de consistencia):** excluidos los solapamientos con el ground truth, ¿mantiene el modelo una proporción baja de videos predichos como inapropiados en `other_child_related`, `random_videos` y `popular_videos`, donde el clasificador original predijo como inapropiados el 0.43%, el 0.73% y el 0% de los videos, respectivamente?
 
-- **Hipótesis 3:** se espera una proporción baja y coherente con la del clasificador original, aunque podría aumentar levemente por el cambio de distribución entre conjuntos.
+- **Hipótesis 3:** se espera una proporción baja y del mismo orden que la del clasificador original, aunque podría aumentar levemente por el cambio de distribución entre conjuntos.
 
 Como fuera del ground truth no existen etiquetas humanas, las preguntas 2 y 3 se responden como comprobaciones de consistencia y no como medidas de recall o de tasa de falsos positivos (ver Secciones 5 y 8).
 
@@ -544,6 +544,21 @@ En la muestra, 490 videos también están en el ground truth.
 - Los videos populares en la muestra resultan predominantemente clasificados como apropiados (97.3%).
 - Los 27 videos clasificados como inapropiados corresponden en su totalidad a videos que forman parte del ground truth.
 - Baja proporción observada de contenido predicho como inapropiado en esta muestra.
+
+### 5.5 Corpus consolidado completo (fuera del ground truth)
+
+Para no depender de las primeras 1,000 líneas, se revisó el corpus consolidado completo (`dataset_consolidado_parts/`, 844,702 videos únicos). En él, cada video del ground truth aparece una sola vez (con `source_dataset = groundtruth`), por lo que los conjuntos adicionales ya no contienen videos del ground truth.
+
+| Conjunto | Videos fuera del ground truth | Predichos inapropiados (clasificador original) |
+|---|---:|---:|
+| elsagate_related | 230,873 | 1,260 (0.55%) |
+| other_child_related | 137,043 | 586 (0.43%) |
+| random | 462,382 | 3,388 (0.73%) |
+| popular | 9,607 | 0 (0.00%) |
+
+**Observaciones:**
+- La ausencia de videos inapropiados fuera del ground truth en `other_child_related` y `random_videos` (Secciones 5.2 y 5.3) es un efecto de la muestra de 1,000 líneas y no se mantiene en los conjuntos completos.
+- El consolidado asigna un único `source_dataset` a cada video, de modo que un video presente en varios conjuntos se cuenta solo en uno.
 
 ---
 

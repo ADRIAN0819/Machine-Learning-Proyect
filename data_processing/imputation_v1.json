@@ -1,0 +1,17 @@
+{
+  "numeric": {
+    "duration_seconds": 349.0,
+    "view_count": 91776.0,
+    "like_count": 507.5,
+    "dislike_count": 54.0,
+    "comment_count": 49.0,
+    "likes_per_view": 0.0053415367163642275,
+    "comments_per_view": 0.00035834532405650747
+  },
+  "categorical": {
+    "category_id": "24",
+    "definition": "hd",
+    "caption": "false",
+    "licensed_content": "false"
+  }
+}

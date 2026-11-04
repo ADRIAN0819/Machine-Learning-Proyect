@@ -38,6 +38,10 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `preprocesamiento_features_v1.ipynb`: Notebook para auditar, transformar e imputar el ground truth.
   * `preprocessing.py`: Función reutilizable de ingeniería de características y exportación.
   * `dataset_features_v1.csv`: 14 features procesadas, etiqueta y metadatos (`video_id`, `channel_id`, `split`) para la partición agrupada por canal.
+* `modeling/`: Partición, validación y comprobación de consistencia (Etapa 2).
+  * `splits.py`: Folds de validación cruzada (5, estratificados y agrupados por canal) dentro de train; genera `folds_v1.csv` y `reports/folds_report.md`. Expone `load_train_test()` y `predefined_cv()` para que todos los modelos usen la misma partición.
+  * `leakage_check.py`: Compara validación aleatoria vs. agrupada por canal con un modelo TF-IDF + regresión logística (`reports/leakage_check.md`).
+  * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3).
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
   * `convert_json_to_csv.py`: Script de utilidad para transformar los archivos JSON crudos a formato CSV.
   * `dataset_groundtruth.csv`: Dataset principal anotado manualmente por humanos (4,797 videos, 4 clases).
@@ -138,6 +142,22 @@ pip install -r requirements.txt
 3. **Preprocesamiento (`data_processing/preprocesamiento_features_v1.ipynb`):**
    * Genera `data_processing/dataset_features_v1.csv` desde `dataset_groundtruth.csv`.
    * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal (3,842 train / 955 test con scikit-learn 1.7.2). `video_id`, `channel_id` y `split` son metadatos: `channel_id` sirve para agrupar la validación cruzada dentro de train y ninguna de las tres debe usarse como feature.
+4. **Partición y validación (`modeling/`):**
+   * `python -m modeling.splits` regenera `modeling/folds_v1.csv` y el reporte de folds.
+   * `python -m modeling.leakage_check` reproduce la comparación validación aleatoria vs. agrupada por canal.
+   * `python -m modeling.additional_inference --model <pipeline.joblib>` evalúa la consistencia en los conjuntos adicionales (usar `--demo --limit-per-part 5000` para una prueba rápida).
+   * Ejecutar los comandos desde la raíz del repositorio.
+
+### 4. Uso de la partición en los modelos
+
+```python
+from modeling.splits import load_train_test, predefined_cv
+from sklearn.model_selection import GridSearchCV
+
+X_train, y_train, X_test, y_test, meta_train, meta_test = load_train_test()
+search = GridSearchCV(pipeline, param_grid, cv=predefined_cv(meta_train), scoring="f1_macro")
+search.fit(X_train, y_train)   # el conjunto de prueba solo se usa al final
+```
 
 ---
 
