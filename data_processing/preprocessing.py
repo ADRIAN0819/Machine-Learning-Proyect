@@ -45,9 +45,11 @@ COUNT_COLUMNS = ("view_count", "like_count", "dislike_count", "comment_count")
 RATIO_COLUMNS = ("likes_per_view", "comments_per_view")
 NUMERIC_COLUMNS = ("duration_seconds", *COUNT_COLUMNS, *RATIO_COLUMNS)
 METADATA_COLUMNS = ("video_id", "channel_id", "split")
+TITLE_STAT_COLUMNS = ("title_chars", "title_words")
 MODEL_FEATURE_COLUMNS = (
     *TEXT_COLUMNS,
     *CATEGORICAL_COLUMNS,
+    *TITLE_STAT_COLUMNS,
     "duration_seconds",
     *(f"{column}_log1p" for column in COUNT_COLUMNS),
     *RATIO_COLUMNS,
@@ -121,6 +123,13 @@ def _assemble_features(
                 )
             )
         features[column] = text
+
+    # Longitud del título: el EDA mostró títulos más largos en suitable y
+    # disturbing (~60 caracteres) que en irrelevant y restricted (~45).
+    features["title_chars"] = features["title"].str.len().astype("int64")
+    features["title_words"] = (
+        features["title"].str.split().str.len().fillna(0).astype("int64")
+    )
 
     for column in CATEGORICAL_COLUMNS:
         features[column] = _normalize_categorical(data[column]).fillna(
