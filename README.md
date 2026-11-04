@@ -88,7 +88,7 @@ Para ejecutar los notebooks de análisis:
 * **Uso:** Inferencia masiva, análisis exploratorio global y modelos de lenguaje.
 
 ### 3. Datos Crudos JSON (Comprimidos)
-* **Carpeta:** `DataSet_Disturbed_YouTube_Kids/`
+* **Ubicación:** `dataset_disturbed_youtube _for_kids/` (`groundtruth_videos.json.gz`, `popular_videos.json.gz` y las carpetas `elsagate_related_videos_parts/`, `other_child_related_videos_parts/` y `random_videos_parts/`).
 * Contiene los archivos originales recolectados en formato JSON comprimidos en `.json.gz` (groundtruth, popular, elsagate_related, other_child_related y random).
 
 ---
@@ -104,7 +104,8 @@ Para ejecutar los notebooks de análisis:
 ## Instrucciones para Ejecutar el Código
 
 ### 1. Requisitos de Entorno
-* **Python:** 3.10 o superior (compatible con Python 3.8+).
+* **Python:** 3.10 o superior (el código usa sintaxis de tipos `X | None`, no compatible con versiones anteriores).
+* **scikit-learn:** 1.7.2 exacto (`requirements.txt`), porque la partición de `StratifiedGroupKFold` cambia entre versiones. Probado con pandas 2.2 y 3.0.
 * Se recomienda utilizar un entorno virtual (`venv` o `conda`).
 
 ### 2. Creación del Entorno Virtual e Instalación de Dependencias
