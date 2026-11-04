@@ -59,17 +59,19 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
 
 El dataset *Disturbed YouTube for Kids* proviene de la investigación de Papadamou et al. (2020) y se encuentra alojado con acceso restringido en Zenodo:
 * **DOI:** [https://doi.org/10.5281/zenodo.3632781](https://doi.org/10.5281/zenodo.3632781)
-* **Licencia y Restricciones:** Debido a los Términos de Servicio de la YouTube Data API y a las condiciones de distribución académica de Zenodo, los datos crudos y consolidados no deben ser redistribuidos públicamente en repositorios abiertos. Por ello, este repositorio **NO** incluye los archivos de datos masivos.
+* **Licencia y Restricciones:** El acceso al dataset en Zenodo es restringido y su uso está sujeto a las condiciones de los autores y a los Términos de Servicio de la YouTube Data API.
+* **Estado actual del repositorio:** El repositorio es público e **incluye** los archivos del dataset dentro de `dataset_disturbed_youtube _for_kids/` (`dataset_groundtruth.csv`, el consolidado particionado en `dataset_consolidado_parts/` y los JSON crudos comprimidos en `.json.gz`, ~1.1 GB), para que el curso pueda reproducir el análisis sin pasos adicionales. Se incluyen únicamente con fines académicos; quien desee reutilizar los datos fuera de este proyecto debe solicitar acceso en Zenodo y citar a Papadamou et al. (2020).
 
-### Dónde colocar los datos
-Para ejecutar los notebooks de análisis:
-1. Descargar el archivo `dataset_groundtruth.csv` desde Zenodo (o solicitar acceso a los autores).
-2. Colocar `dataset_groundtruth.csv` dentro de la carpeta:
+### Dónde están los datos
+No es necesario descargar nada: al clonar el repositorio, los scripts y notebooks encuentran los datos en sus rutas por defecto.
+1. Ground truth (entrenamiento y evaluación):
    ```text
    dataset_disturbed_youtube _for_kids/dataset_groundtruth.csv
    ```
-   *(Esta es la ruta relativa `../dataset_disturbed_youtube _for_kids/dataset_groundtruth.csv` que esperan por defecto los notebooks dentro de `exploratory_data_analysis/`).*
-3. Los archivos `.json` crudos o el CSV consolidado de 1 GB no deben commitearse; `.gitignore` ya está configurado para excluirlos automáticamente.
+   *(Los notebooks de `exploratory_data_analysis/` lo leen con la ruta relativa `../dataset_disturbed_youtube _for_kids/dataset_groundtruth.csv`).*
+2. Conjuntos adicionales (consistencia, PI2 y PI3): `dataset_disturbed_youtube _for_kids/dataset_consolidado_parts/part_01.csv.gz` a `part_10.csv.gz`.
+3. Si en el futuro se retiran los datos del repositorio, basta con descargarlos desde Zenodo y colocarlos en esas mismas rutas.
+4. No se deben commitear archivos generados pesados: el CSV consolidado descomprimido de 1 GB, los `.json` sin comprimir, ni `modeling/outputs/` o `modeling/models/` (ya excluidos en `.gitignore`).
 
 ---
 
@@ -88,7 +90,7 @@ Para ejecutar los notebooks de análisis:
 * **Uso:** Inferencia masiva, análisis exploratorio global y modelos de lenguaje.
 
 ### 3. Datos Crudos JSON (Comprimidos)
-* **Carpeta:** `DataSet_Disturbed_YouTube_Kids/`
+* **Ubicación:** `dataset_disturbed_youtube _for_kids/` (`groundtruth_videos.json.gz`, `popular_videos.json.gz` y las carpetas `elsagate_related_videos_parts/`, `other_child_related_videos_parts/` y `random_videos_parts/`).
 * Contiene los archivos originales recolectados en formato JSON comprimidos en `.json.gz` (groundtruth, popular, elsagate_related, other_child_related y random).
 
 ---
@@ -104,7 +106,8 @@ Para ejecutar los notebooks de análisis:
 ## Instrucciones para Ejecutar el Código
 
 ### 1. Requisitos de Entorno
-* **Python:** 3.10 o superior (compatible con Python 3.8+).
+* **Python:** 3.10 o superior (el código usa sintaxis de tipos `X | None`, no compatible con versiones anteriores).
+* **scikit-learn:** 1.7.2 exacto (`requirements.txt`), porque la partición de `StratifiedGroupKFold` cambia entre versiones. Probado con pandas 2.2 y 3.0.
 * Se recomienda utilizar un entorno virtual (`venv` o `conda`).
 
 ### 2. Creación del Entorno Virtual e Instalación de Dependencias
