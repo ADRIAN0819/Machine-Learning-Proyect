@@ -37,7 +37,7 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
 * `data_processing/`: Preprocesamiento y dataset de características v1.
   * `preprocesamiento_features_v1.ipynb`: Notebook para auditar, transformar e imputar el ground truth.
   * `preprocessing.py`: Función reutilizable de ingeniería de características y exportación.
-  * `dataset_features_v1.csv`: Features procesadas con etiqueta y metadato de split agrupado por canal.
+  * `dataset_features_v1.csv`: 14 features procesadas, etiqueta y metadatos (`video_id`, `channel_id`, `split`) para la partición agrupada por canal.
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
   * `convert_json_to_csv.py`: Script de utilidad para transformar los archivos JSON crudos a formato CSV.
   * `dataset_groundtruth.csv`: Dataset principal anotado manualmente por humanos (4,797 videos, 4 clases).
@@ -137,7 +137,7 @@ pip install -r requirements.txt
    * Guarda sus resultados en la carpeta `images_overleaf/`.
 3. **Preprocesamiento (`data_processing/preprocesamiento_features_v1.ipynb`):**
    * Genera `data_processing/dataset_features_v1.csv` desde `dataset_groundtruth.csv`.
-   * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal; `split` es metadato y debe excluirse de las features del modelo.
+   * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal (3,842 train / 955 test con scikit-learn 1.7.2). `video_id`, `channel_id` y `split` son metadatos: `channel_id` sirve para agrupar la validación cruzada dentro de train y ninguna de las tres debe usarse como feature.
 
 ---
 

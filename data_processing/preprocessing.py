@@ -43,6 +43,7 @@ CATEGORICAL_COLUMNS = (
 COUNT_COLUMNS = ("view_count", "like_count", "dislike_count", "comment_count")
 RATIO_COLUMNS = ("likes_per_view", "comments_per_view")
 NUMERIC_COLUMNS = ("duration_seconds", *COUNT_COLUMNS, *RATIO_COLUMNS)
+METADATA_COLUMNS = ("video_id", "channel_id", "split")
 LEAKAGE_AND_IDENTIFIER_COLUMNS = (
     "prediction",
     "is_ground_truth",
@@ -91,7 +92,11 @@ def build_features(
     for column in numeric_source_columns:
         source_values = data[column].astype("string").str.strip()
         is_missing = source_values.eq("")
-        converted = pd.to_numeric(source_values.mask(is_missing), errors="coerce")
+        # float64 explícito: con pandas >= 3 to_numeric devuelve Int64 y la
+        # imputación con medianas no enteras (p. ej. 507.5) fallaría.
+        converted = pd.to_numeric(
+            source_values.mask(is_missing), errors="coerce"
+        ).astype("float64")
         invalid_values = ~is_missing & converted.isna()
         if invalid_values.any():
             raise ValueError(f"{column} contiene valores numéricos inválidos.")
@@ -121,9 +126,12 @@ def build_features(
     for column in TEXT_COLUMNS:
         text = data[column].astype("string").fillna("").str.strip()
         if column == "tags":
-            text = text.str.lower().map(
+            # str.lower de Python: resultado idéntico en pandas 2 y 3.
+            text = text.map(
                 lambda value: "|".join(
-                    tag.strip() for tag in value.split("|") if tag.strip()
+                    tag.strip()
+                    for tag in str(value).lower().split("|")
+                    if tag.strip()
                 )
             )
         features[column] = text
@@ -164,7 +172,16 @@ def build_features(
         *(f"{column}_log1p" for column in COUNT_COLUMNS),
         *RATIO_COLUMNS,
     ]
-    exported_columns = [*model_feature_columns, "classification_label", "split"]
+    # video_id y channel_id se exportan solo como metadatos: channel_id es
+    # necesario para la validación cruzada agrupada por canal dentro de train.
+    # Ninguna columna de METADATA_COLUMNS debe entrar al modelo.
+    features["video_id"] = data["video_id"].astype("string").str.strip()
+    features["channel_id"] = groups
+    exported_columns = [
+        *METADATA_COLUMNS,
+        *model_feature_columns,
+        "classification_label",
+    ]
     features = features.loc[:, exported_columns]
 
     if features.isna().any().any():
@@ -179,10 +196,11 @@ def build_features(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     features.to_csv(output_path, index=False)
-    missing_before = data.isna().sum()
-    for column in (*TEXT_COLUMNS, *CATEGORICAL_COLUMNS):
-        values = data[column].astype("string")
-        missing_before[column] = (values.isna() | values.str.strip().eq("")).sum()
+    # Con keep_default_na=False los faltantes llegan como cadenas vacías,
+    # por eso se cuentan así en todas las columnas (incluidas las numéricas).
+    missing_before = data.apply(
+        lambda column: column.astype("string").fillna("").str.strip().eq("").sum()
+    )
     audit = {
         "rows": len(features),
         "class_counts": labels.value_counts().to_dict(),
@@ -190,6 +208,8 @@ def build_features(
         "missing_before": missing_before.loc[lambda values: values.gt(0)].to_dict(),
         "numeric_imputation": imputation_values,
         "categorical_imputation": categorical_imputation,
+        "metadata_columns": list(METADATA_COLUMNS),
+        "model_feature_columns": model_feature_columns,
         "excluded_columns_present": sorted(
             set(LEAKAGE_AND_IDENTIFIER_COLUMNS).intersection(data.columns)
         ),

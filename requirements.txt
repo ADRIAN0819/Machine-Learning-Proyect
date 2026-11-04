@@ -11,7 +11,9 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 
 # Modelado y evaluación de Machine Learning
-scikit-learn>=1.2.0
+# Versión fijada: el split de StratifiedGroupKFold (dataset_features_v1.csv)
+# cambia entre versiones de scikit-learn; con 1.7.2 se obtiene 3,842 train / 955 test.
+scikit-learn==1.7.2
 
 # Soporte para ejecución de Notebooks de Jupyter
 nbformat>=5.9.0
