@@ -525,8 +525,54 @@ Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el dise
 Los conjuntos adicionales se analizaron solo con las primeras 1,000 líneas de un archivo, que no son muestras aleatorias y no representan la distribución de los conjuntos completos. Los datos corresponden a un periodo específico (2018) y YouTube ha cambiado significativamente desde entonces, por lo que los patrones pueden haber evolucionado. Además, las etiquetas manuales pueden contener sesgos subjetivos de los anotadores humanos.
 
 % =====================================================================
-% SIGUIENTES PASOS
+% PREPROCESAMIENTO E INGENIERÍA DE CARACTERÍSTICAS  [MARIELA]
 % =====================================================================
+\section{Preprocesamiento e Ingeniería de Características}\label{sec:prep}
+El preprocesamiento se implementó en \texttt{data\_processing/preprocessing.py} y genera \texttt{dataset\_features\_v1.csv}, con los 4,797 videos del ground truth, 16 características, la etiqueta y tres columnas de metadatos (\texttt{video\_id}, \texttt{channel\_id} y \texttt{split}) que no se usan como características. Para evitar fuga de datos, todos los valores que se aprenden de los datos (medianas, modas y vocabularios) se ajustan solo con el conjunto de entrenamiento.
+
+\subsection{Partición previa}
+Antes de transformar los datos se reservó el conjunto de prueba con \texttt{StratifiedGroupKFold} (5 particiones, semilla 42), estratificando por clase y agrupando por \texttt{channel\_id}, y se tomó la primera partición como prueba: 3,842 videos de entrenamiento y 955 de prueba (19.9\%), sin canales en común (Sección~\ref{sec:leak}). Así, las estadísticas de imputación no incorporan información del conjunto de prueba.
+
+\subsection{Transformaciones aplicadas}
+\begin{itemize}
+\item \textbf{Valores faltantes numéricos:} \texttt{like\_count}, \texttt{dislike\_count} (128), \texttt{comment\_count} (228), \texttt{view\_count} (3) y \texttt{duration\_seconds} (1) se imputan con la mediana de entrenamiento, robusta frente a la fuerte asimetría observada (Tabla~\ref{tab:desc}).
+\item \textbf{Valores faltantes categóricos:} \texttt{definition}, \texttt{caption} y \texttt{licensed\_content} (1 faltante cada una) se imputan con la moda de entrenamiento.
+\item \textbf{Texto faltante:} la ausencia de descripción (506) o de tags (883) se representa como texto vacío, sin inventar contenido. Los tags se normalizan a minúsculas y se separan por \texttt{|}, como en el análisis de la Sección~\ref{sec:target}.
+\item \textbf{Transformación logarítmica:} los cuatro conteos de interacción se transforman con $\log(1+x)$, que elimina los outliers detectados por el IQR (Tabla~\ref{tab:out}) sin descartar videos.
+\item \textbf{Codificación y escalamiento:} \texttt{category\_id}, \texttt{definition}, \texttt{caption} y \texttt{licensed\_content} se codifican con one-hot (las categorías con menos de 5 videos se agrupan), y las variables numéricas se estandarizan.
+\end{itemize}
+
+\subsection{Características derivadas}
+\begin{itemize}
+\item \textbf{Razones de interacción:} likes/vistas y comentarios/vistas, que sustituyen el uso conjunto de conteos casi colineales (Sección~\ref{sec:corr}). Si faltan los conteos o las vistas son 0 (11 videos), la razón queda indefinida y se imputa con la mediana de entrenamiento.
+\item \textbf{Longitud del título:} número de caracteres y de palabras. Sus medias reproducen las de la Tabla~\ref{tab:clase} (alrededor de 60 caracteres en \textit{suitable} y \textit{disturbing} frente a 45 en \textit{irrelevant} y \textit{restricted}).
+\item \textbf{Representación del texto:} TF-IDF con frecuencia sublineal y sin acentos sobre el título y la descripción (unigramas y bigramas) y sobre los tags, tratando cada tag completo como un token (por ejemplo, \textit{for kids}). Ajustado con el conjunto de entrenamiento genera 4,985 columnas para el título, 27,344 para la descripción y 5,927 para los tags. Para los modelos de árboles, este bloque puede reducirse con \texttt{TruncatedSVD}.
+\end{itemize}
+El texto se vectoriza dentro de un \texttt{Pipeline} de scikit-learn, de modo que en la validación cruzada el vocabulario y los pesos IDF se ajustan solo con las particiones de entrenamiento. La Tabla~\ref{tab:terms} muestra los tags con mayor asociación a cada clase en entrenamiento (prueba $\chi^2$, una clase contra el resto). Coinciden con los hallazgos del EDA, pero algunos términos corresponden a series o canales concretos (por ejemplo, \textit{tom and jerry} o \textit{prankzone tv}), lo que confirma la necesidad de validar agrupando por canal.
+
+\begin{table}[!t]
+\caption{Tags más asociados a cada clase en entrenamiento ($\chi^2$)}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|p{6.2cm}|}
+\hline
+\textbf{Clase} & \textbf{Tags} \\
+\hline
+Disturbing & spiderman, superhero, mlg, spidey, spider-man, joker, elsa \\
+\hline
+Irrelevant & srbija, pop, 2016, rap, comedian, sports \\
+\hline
+Restricted & sexy, sex, prankzone tv, playstation 4, hot, hypnosis \\
+\hline
+Suitable & tom and jerry, cartoon, kids, animation, animated cartoon \\
+\hline
+\end{tabular}
+\label{tab:terms}
+\end{center}
+\end{table}
+
+\subsection{Variables excluidas}
+No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth} (codifican el proceso de clasificación o de anotación), \texttt{source\_dataset} (constante), \texttt{favorite\_count} (siempre 0), \texttt{published\_at} y \texttt{duration\_iso} (redundante con \texttt{duration\_seconds}), ni los identificadores \texttt{video\_id}, \texttt{channel\_id} y \texttt{channel\_title}, para que el modelo no memorice canales (Sección~\ref{sec:leak}); \texttt{channel\_id} se conserva solo para agrupar la partición. Las mismas transformaciones, con los valores de imputación de entrenamiento, se aplican a los conjuntos adicionales.
 
 % =====================================================================
 % SIGUIENTES PASOS  [MAFER]

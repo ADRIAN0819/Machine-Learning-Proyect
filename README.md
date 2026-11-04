@@ -37,9 +37,10 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
 * `data_processing/`: Preprocesamiento y dataset de características v1.
   * `preprocesamiento_features_v1.ipynb`: Notebook para auditar, transformar e imputar el ground truth.
   * `preprocessing.py`: Función reutilizable de ingeniería de características y exportación.
-  * `dataset_features_v1.csv`: 14 features procesadas, etiqueta y metadatos (`video_id`, `channel_id`, `split`) para la partición agrupada por canal.
+  * `dataset_features_v1.csv`: 16 features procesadas (incluye longitud del título), etiqueta y metadatos (`video_id`, `channel_id`, `split`) para la partición agrupada por canal.
 * `modeling/`: Partición, validación y comprobación de consistencia (Etapa 2).
   * `splits.py`: Folds de validación cruzada (5, estratificados y agrupados por canal) dentro de train; genera `folds_v1.csv` y `reports/folds_report.md`. Expone `load_train_test()` y `predefined_cv()` para que todos los modelos usen la misma partición.
+  * `features.py`: Representación de texto (TF-IDF de título, descripción y tags) y de metadatos como `ColumnTransformer`; `build_preprocessor("text" | "metadata" | "combined", svd_components=None)` para el ablation study (`reports/text_features.md`).
   * `leakage_check.py`: Compara validación aleatoria vs. agrupada por canal con un modelo TF-IDF + regresión logística (`reports/leakage_check.md`).
   * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3).
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
@@ -144,6 +145,7 @@ pip install -r requirements.txt
    * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal (3,842 train / 955 test con scikit-learn 1.7.2). `video_id`, `channel_id` y `split` son metadatos: `channel_id` sirve para agrupar la validación cruzada dentro de train y ninguna de las tres debe usarse como feature.
 4. **Partición y validación (`modeling/`):**
    * `python -m modeling.splits` regenera `modeling/folds_v1.csv` y el reporte de folds.
+   * `python -m modeling.features` genera el reporte de la representación de texto.
    * `python -m modeling.leakage_check` reproduce la comparación validación aleatoria vs. agrupada por canal.
    * `python -m modeling.additional_inference --model <pipeline.joblib>` evalúa la consistencia en los conjuntos adicionales (usar `--demo --limit-per-part 5000` para una prueba rápida).
    * Ejecutar los comandos desde la raíz del repositorio.
@@ -152,9 +154,14 @@ pip install -r requirements.txt
 
 ```python
 from modeling.splits import load_train_test, predefined_cv
+from modeling.features import build_preprocessor
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import make_pipeline
 
 X_train, y_train, X_test, y_test, meta_train, meta_test = load_train_test()
+pipeline = make_pipeline(build_preprocessor("combined"), LogisticRegression(max_iter=3000, class_weight="balanced"))
+param_grid = {"logisticregression__C": [0.1, 1, 10]}
 search = GridSearchCV(pipeline, param_grid, cv=predefined_cv(meta_train), scoring="f1_macro")
 search.fit(X_train, y_train)   # el conjunto de prueba solo se usa al final
 ```
