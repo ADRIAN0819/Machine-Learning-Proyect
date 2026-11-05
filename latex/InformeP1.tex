@@ -521,7 +521,7 @@ Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el dise
 \end{enumerate}
 
 % ----- [ADRIÁN] -----
-\subsection{Limitaciones}
+\subsection{Limitaciones}\label{sec:limit1}
 Los conjuntos adicionales se analizaron solo con las primeras 1,000 líneas de un archivo, que no son muestras aleatorias y no representan la distribución de los conjuntos completos. Los datos corresponden a un periodo específico (2018) y YouTube ha cambiado significativamente desde entonces, por lo que los patrones pueden haber evolucionado. Además, las etiquetas manuales pueden contener sesgos subjetivos de los anotadores humanos.
 
 % =====================================================================
@@ -573,6 +573,114 @@ Suitable & tom and jerry, cartoon, kids, animation, animated cartoon \\
 
 \subsection{Variables excluidas}
 No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth} (codifican el proceso de clasificación o de anotación), \texttt{source\_dataset} (constante), \texttt{favorite\_count} (siempre 0), \texttt{published\_at} y \texttt{duration\_iso} (redundante con \texttt{duration\_seconds}), ni los identificadores \texttt{video\_id}, \texttt{channel\_id} y \texttt{channel\_title}, para que el modelo no memorice canales (Sección~\ref{sec:leak}); \texttt{channel\_id} se conserva solo para agrupar la partición. Las mismas transformaciones, con los valores de imputación de entrenamiento, se aplican a los conjuntos adicionales.
+
+% =====================================================================
+% METODOLOGÍA Y MODELOS  [LEO]  --  PENDIENTE (IV.A baseline, IV.B modelos, IV.C hiperparámetros)
+% =====================================================================
+
+% =====================================================================
+% DISEÑO EXPERIMENTAL Y EVALUACIÓN
+% =====================================================================
+\section{Diseño Experimental y Evaluación}\label{sec:diseno}
+
+% ----- [ADRIÁN] -----
+\subsection{Estrategia de validación}\label{sec:validacion}
+El análisis de la Sección~\ref{sec:leak} mostró que los videos de un mismo canal comparten clase con frecuencia (11 de los 13 canales con 12 o más videos son 100\% \textit{suitable}) y que algunos términos del texto identifican canales o series concretas (Tabla~\ref{tab:terms}). Si videos de un mismo canal quedaran a ambos lados de la partición, el modelo podría acertar por reconocer el canal y no por el contenido. Por ello, toda la partición se agrupa por \texttt{channel\_id} y se estratifica por clase con \texttt{StratifiedGroupKFold} (scikit-learn~1.7.2, semilla 42):
+\begin{itemize}
+\item \textbf{Conjunto de prueba:} la primera de cinco particiones del ground truth (955 videos, 19.9\%), reservada y usada una sola vez para la evaluación final.
+\item \textbf{Validación cruzada:} cinco particiones construidas solo sobre los 3,842 videos de entrenamiento con el mismo criterio. Todos los modelos usan exactamente las mismas particiones (\texttt{modeling/folds\_v1.csv}), lo que hace comparables sus resultados y permite usarlas también para ajustar hiperparámetros.
+\end{itemize}
+La Tabla~\ref{tab:folds} muestra que ningún canal aparece en más de una partición y que la proporción de cada clase se aleja como máximo 4.4 puntos porcentuales de la del ground truth completo. Todas las transformaciones que aprenden de los datos (imputación, TF-IDF, escalamiento y reducción de dimensión) se aplican dentro de un \texttt{Pipeline}, por lo que en cada partición se ajustan solo con los datos de entrenamiento.
+
+\begin{table}[!t]
+\caption{Particiones agrupadas por canal: videos, canales y \% por clase}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|r|r|r|r|r|r|}
+\hline
+\textbf{Partición} & \textbf{Videos} & \textbf{Canales} & \textbf{Dist.} & \textbf{Irrel.} & \textbf{Restr.} & \textbf{Suit.} \\
+\hline
+Fold 0 & 745 & 608 & 17.6 & 40.5 & 8.9 & 33.0 \\
+\hline
+Fold 1 & 747 & 608 & 19.3 & 42.6 & 11.0 & 27.2 \\
+\hline
+Fold 2 & 784 & 614 & 22.2 & 41.7 & 6.8 & 29.3 \\
+\hline
+Fold 3 & 768 & 614 & 19.7 & 38.0 & 8.9 & 33.5 \\
+\hline
+Fold 4 & 798 & 608 & 17.2 & 41.9 & 8.8 & 32.2 \\
+\hline
+Prueba & 955 & 766 & 20.1 & 38.0 & 8.4 & 33.5 \\
+\hline
+\textit{Ground truth} & 4,797 & 3,818 & 19.4 & 40.4 & 8.7 & 31.5 \\
+\hline
+\end{tabular}
+\label{tab:folds}
+\end{center}
+\end{table}
+
+Para cuantificar el riesgo, se evaluó un mismo modelo de referencia (TF-IDF sobre título, tags y descripción con regresión logística balanceada) con validación cruzada aleatoria (\texttt{StratifiedKFold}) y con las particiones agrupadas por canal, ambas sobre el conjunto de entrenamiento (Tabla~\ref{tab:leakcv}). La validación aleatoria da un F1 macro 0.020 mayor, y lo mismo ocurre con el recall macro y la exactitud. La diferencia es moderada y está dentro de la variabilidad entre particiones, pero tiene el sentido esperado: con una partición aleatoria, parte del desempeño se debe a reconocer canales ya vistos. Por eso todos los resultados de este trabajo se reportan con la validación agrupada, que es la más cercana al uso real del modelo sobre canales nuevos.
+
+\begin{table}[!t]
+\caption{Validación aleatoria vs.\ agrupada por canal (media $\pm$ desv. est., 5 particiones)}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Validación} & \textbf{F1 macro} & \textbf{Recall macro} & \textbf{Exactitud} \\
+\hline
+Aleatoria & 0.699 $\pm$ 0.020 & 0.681 $\pm$ 0.020 & 0.766 $\pm$ 0.014 \\
+\hline
+Agrupada por canal & 0.678 $\pm$ 0.028 & 0.661 $\pm$ 0.025 & 0.751 $\pm$ 0.018 \\
+\hline
+\end{tabular}
+\label{tab:leakcv}
+\end{center}
+\end{table}
+
+% ----- [MAFER] V.B Métricas  --  PENDIENTE
+% ----- [LEO/MAFER] V.C Manejo del desbalance  --  PENDIENTE
+
+% =====================================================================
+% RESULTADOS Y ANÁLISIS  --  PENDIENTE
+% VI.A-C [LEO/MAFER]; VI.D Consistencia en conjuntos adicionales [ADRIÁN]
+%   (requiere el modelo final: python -m modeling.additional_inference --model <final>.joblib)
+% =====================================================================
+
+% =====================================================================
+% DISCUSIÓN Y LIMITACIONES  [ADRIÁN]
+% =====================================================================
+\section{Discusión y Limitaciones}\label{sec:discusion}
+
+% VII.A Interpretación de resultados  --  PENDIENTE (requiere resultados de las Secciones VI)
+
+\subsection{Limitaciones}\label{sec:limit2}
+Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1}), el diseño del proyecto tiene las siguientes:
+\begin{itemize}
+\item \textbf{Solo metadatos:} el modelo no observa el video ni el audio. Un video perturbador con título, descripción y tags inocuos es, por construcción, indetectable para este enfoque, y un creador malintencionado puede modificar su texto para evadirlo, como se describe en el fenómeno Elsagate~\cite{uscm}.
+\item \textbf{Vigencia temporal:} el 89.3\% de los videos del ground truth se publicó entre 2014 y 2018, y los más recientes son de 2019. Desde entonces cambiaron las tendencias de contenido infantil y la propia plataforma: por ejemplo, en noviembre de 2021 YouTube dejó de mostrar públicamente el número de dislikes~\cite{ytdislikes}, una de las variables del modelo, que podría no estar disponible para videos actuales.
+\item \textbf{Métricas de interacción como fotografía:} vistas, likes y comentarios se midieron una sola vez y dependen de la antigüedad del video, por lo que un video reciente con pocas vistas no es comparable con uno de años de antigüedad.
+\item \textbf{Etiquetas y tamaño:} el ground truth tiene 4,797 videos y solo 419 de la clase \textit{restricted}; las etiquetas provienen de anotadores humanos y la frontera entre \textit{suitable} y \textit{disturbing} es en parte subjetiva.
+\item \textbf{Conjuntos adicionales sin etiquetas:} fuera del ground truth solo existe la predicción binaria del clasificador original, que no es una etiqueta verdadera; además, el corpus consolidado asigna un único conjunto de origen a cada video. Por eso las preguntas PI2 y PI3 se responden como comprobaciones de consistencia y no como medidas de eficacia.
+\item \textbf{Asociaciones con canales y series:} aunque la validación agrupada evita evaluar sobre canales vistos, el modelo puede aprender términos ligados a franquicias concretas (por ejemplo, \textit{spiderman} o \textit{peppa}) que perderían valor si cambian las tendencias.
+\end{itemize}
+
+\subsection{Consideraciones éticas}\label{sec:etica}
+\begin{itemize}
+\item \textbf{Costo asimétrico de los errores:} un falso negativo en \textit{disturbing} o \textit{restricted} significa que un niño de 1 a 5 años puede ver contenido violento, sexual o aterrador presentado como infantil, mientras que un falso positivo genera, como mucho, una revisión innecesaria. Por eso la evaluación prioriza el recall de estas dos clases frente a la exactitud global.
+\item \textbf{Apoyo, no reemplazo, de la moderación humana:} el modelo está pensado para priorizar videos para revisión humana, no para restringir o eliminar contenido de forma automática. Una decisión automática sin revisión afectaría a creadores legítimos: la Tabla~\ref{tab:tags} muestra que el contenido infantil apropiado y el perturbador comparten personajes y vocabulario (por ejemplo, el 31.0\% de los videos con el tag \textit{elsa} son \textit{suitable} y el 60.0\% \textit{disturbing}), por lo que los falsos positivos recaerían precisamente sobre contenido infantil legítimo.
+\item \textbf{Sesgos de representación:} el modelo solo conoce los canales, idiomas y tipos de contenido presentes en el ground truth. Contenido de comunidades o idiomas poco representados puede clasificarse peor, y estos errores no son visibles en las métricas globales.
+\item \textbf{Transparencia:} un sistema de apoyo a la moderación debe poder explicar sus decisiones. Por ello se priorizan representaciones interpretables (términos de TF-IDF, longitud del título, métricas de interacción) y se analiza la importancia de las características, de modo que un moderador pueda ver qué señales motivaron cada alerta.
+\item \textbf{Uso de los datos:} el dataset contiene solo metadatos públicos de los videos, sin información personal de los espectadores ni de menores. Se usa con fines académicos y citando a sus autores~\cite{papadamou,papadamou_data}, cuyo acceso en Zenodo es restringido.
+\end{itemize}
+% Pendiente para la versión final: ilustrar el costo asimétrico con 2-3 falsos
+% negativos reales en disturbing del análisis de errores de Mafer (Sección VI).
+
+% =====================================================================
+% CONCLUSIONES  --  PENDIENTE (responder PI1-PI3)
+% =====================================================================
 
 % =====================================================================
 % SIGUIENTES PASOS  [MAFER]
