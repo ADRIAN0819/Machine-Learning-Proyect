@@ -1,0 +1,4 @@
+fecha,etapa,modelo,vista,f1_macro,recall_macro,accuracy,f1_disturbing,f1_irrelevant,f1_restricted,f1_suitable,recall_disturbing,recall_restricted,f1_macro_std
+2026-11-06T19:57:04,baseline,Dummy (clase mayoritaria),text,0.1452,0.25,0.4094,0.0,0.5808,0.0,0.0,0.0,0.0,0.0041
+2026-11-06T19:57:04,baseline,LogReg + TF-IDF,text,0.6722,0.6558,0.7447,0.6904,0.7905,0.4223,0.7856,0.6367,0.359,0.0251
+2026-11-06T19:57:04,baseline,Naive Bayes Multinomial + TF-IDF,text,0.6587,0.6392,0.7465,0.7029,0.7933,0.3597,0.7788,0.67,0.2537,0.0326
