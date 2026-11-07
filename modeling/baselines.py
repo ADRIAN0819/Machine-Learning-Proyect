@@ -144,11 +144,15 @@ def build_report(results: dict[str, dict[str, tuple[float, float]]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def append_log(results: dict[str, dict[str, tuple[float, float]]], views: dict[str, str]) -> None:
+def append_log(
+    results: dict[str, dict[str, tuple[float, float]]],
+    views: dict[str, str],
+    etapa: str = "baseline",
+) -> None:
     timestamp = datetime.now().isoformat(timespec="seconds")
     rows = []
     for name, m in results.items():
-        row = {"fecha": timestamp, "etapa": "baseline", "modelo": name, "vista": views[name]}
+        row = {"fecha": timestamp, "etapa": etapa, "modelo": name, "vista": views[name]}
         row.update({k: round(v[0], 4) for k, v in m.items()})
         row["f1_macro_std"] = round(m["f1_macro"][1], 4)
         rows.append(row)
