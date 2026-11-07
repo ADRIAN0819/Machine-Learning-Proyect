@@ -9,7 +9,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{url}
+\usepackage{multirow}
 \def\UrlBreaks{\do\/\do\-\do\.\do\_}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -640,14 +640,157 @@ Agrupada por canal & 0.678 $\pm$ 0.028 & 0.661 $\pm$ 0.025 & 0.751 $\pm$ 0.018 \
 \end{center}
 \end{table}
 
-% ----- [MAFER] V.B Métricas  --  PENDIENTE
-% ----- [LEO/MAFER] V.C Manejo del desbalance  --  PENDIENTE
+% ----- [MAFER] V.B Métricas
+\subsection{Métricas de evaluación}\label{sec:metricas}
+Dado el desbalance de clases (IR hasta $4.62\times$, Tabla~\ref{tab:clases}), la exactitud (accuracy) no es una métrica adecuada: un clasificador trivial que siempre prediga \textit{irrelevant} obtendría 40.4\% sin detectar ningún video problemático. Por ello se adoptan las siguientes métricas principales:
+
+\begin{itemize}
+\item \textbf{F1 macro:} media no ponderada del F1 de cada clase. Penaliza por igual el bajo desempeño en cualquier clase, incluidas las minoritarias.
+\item \textbf{Recall por clase:} especialmente en \textit{disturbing} y \textit{restricted}, donde un falso negativo tiene consecuencias directas para la seguridad infantil.
+\item \textbf{AUC-ROC} (one-vs-rest): mide la capacidad discriminativa independientemente del umbral de decisión.
+\item \textbf{Average Precision (AP):} área bajo la curva Precision-Recall, más informativa que AUC-ROC cuando las clases positivas son minoritarias.
+\item \textbf{Matriz de confusión:} para identificar patrones de error entre clases adyacentes.
+\end{itemize}
+
+% ----- [LEO/MAFER] V.C Manejo del desbalance
+\subsection{Manejo del desbalance de clases}\label{sec:desbalance}
+Se adoptó \texttt{class\_weight=\char"0022 balanced\char"0022} en todos los modelos, que ajusta los pesos de cada clase inversamente proporcional a su frecuencia. Esta estrategia evita la generación de datos sintéticos (SMOTE), que podría introducir interpolaciones irrealistas en el espacio TF-IDF de alta dimensión. La alternativa SMOTE se descartó porque el bloque de texto genera matrices dispersas de hasta 38,288 columnas, donde las interpolaciones entre vectores no tienen interpretación semántica clara.
 
 % =====================================================================
-% RESULTADOS Y ANÁLISIS  --  PENDIENTE
-% VI.A-C [LEO/MAFER]; VI.D Consistencia en conjuntos adicionales [ADRIÁN]
-%   (requiere el modelo final: python -m modeling.additional_inference --model <final>.joblib)
+% RESULTADOS Y ANÁLISIS  [MAFER]
 % =====================================================================
+\section{Resultados y Análisis}\label{sec:resultados}
+
+\subsection{Comparación de modelos}\label{sec:comp}
+La Tabla~\ref{tab:modelos} compara todos los modelos evaluados con validación cruzada de 5 particiones agrupadas por canal (solo sobre train, 3,842 videos). El modelo combinado de regresión logística (TF-IDF + metadatos) obtiene el mejor F1 macro y el mayor recall en \textit{restricted}, la clase más difícil. El ablation study muestra que el texto aporta más que los metadatos solos, y que la combinación supera a cualquiera de las dos fuentes por separado.
+
+\begin{table}[!t]
+\caption{Comparación de modelos — validación cruzada agrupada por canal (media $\pm$ desv.\ est., 5 folds)}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Modelo} & \textbf{F1 macro} & \textbf{Rec.\ disturb.} & \textbf{Rec.\ restr.} \\
+\hline
+Dummy (mayoritaria) & 0.145 $\pm$ 0.004 & 0.000 & 0.000 \\
+\hline
+Naive Bayes + TF-IDF & 0.659 $\pm$ 0.033 & 0.670 & 0.254 \\
+\hline
+LogReg + TF-IDF & 0.672 $\pm$ 0.025 & 0.637 & 0.359 \\
+\hline
+RF (metadatos) & 0.575 $\pm$ 0.027 & 0.457 & 0.323 \\
+\hline
+LightGBM (metadatos) & 0.580 $\pm$ 0.020 & 0.496 & 0.326 \\
+\hline
+LightGBM (texto solo) & 0.625 $\pm$ 0.002 & 0.609 & 0.157 \\
+\hline
+LightGBM combinado & 0.682 $\pm$ 0.020 & 0.621 & 0.331 \\
+\hline
+\textbf{LogReg combinado} & \textbf{0.710 $\pm$ 0.023} & \textbf{0.664} & \textbf{0.566} \\
+\hline
+\end{tabular}
+\label{tab:modelos}
+\end{center}
+\end{table}
+
+\subsection{Modelo final en el conjunto de prueba}\label{sec:final}
+El modelo seleccionado (LogReg combinado, \texttt{C=1.16}, ajustado con \texttt{RandomizedSearchCV} sobre train) se evaluó \emph{una sola vez} sobre los 955 videos de prueba, cuyos canales no aparecen en entrenamiento. La Tabla~\ref{tab:final} resume los resultados.
+
+\begin{table}[!t]
+\caption{Métricas del modelo final en el conjunto de prueba (955 videos)}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+\textbf{Clase} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} & \textbf{AUC} & \textbf{AP} \\
+\hline
+Disturbing & 0.801 & 0.714 & 0.755 & 0.929 & 0.848 \\
+\hline
+Irrelevant & 0.794 & 0.837 & 0.815 & 0.921 & 0.873 \\
+\hline
+Restricted & 0.500 & 0.550 & 0.524 & 0.878 & 0.483 \\
+\hline
+Suitable & 0.815 & 0.797 & 0.806 & 0.929 & 0.885 \\
+\hline
+\textbf{Macro} & \textbf{0.727} & \textbf{0.724} & \textbf{0.725} & \textbf{0.914} & \textbf{0.772} \\
+\hline
+\end{tabular}
+\label{tab:final}
+\end{center}
+\end{table}
+
+La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas Precision-Recall para cada clase. \textit{Restricted} concentra el AUC y AP más bajos (0.878 y 0.483 respectivamente), lo que refleja la escasez de ejemplos de entrenamiento (419 videos, $\mathrm{IR}=4.62\times$) y la superposición con \textit{irrelevant} en el espacio de metadatos. La Fig.~\ref{fig:cm} presenta la matriz de confusión: los principales errores ocurren entre \textit{suitable} $\leftrightarrow$ \textit{disturbing} (29 FN y 14 FP) y entre \textit{irrelevant} $\leftrightarrow$ \textit{restricted} (22 FN y 24 FP).
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/roc_curves.png}
+\caption{Curvas ROC one-vs-rest. AUC macro = 0.914.}
+\label{fig:roc}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/pr_curves.png}
+\caption{Curvas Precision-Recall. AP macro = 0.772. La clase \textit{restricted} muestra la mayor caída por su bajo soporte (80 videos en test).}
+\label{fig:pr}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/confusion_matrix.png}
+\caption{Matriz de confusión sobre el conjunto de prueba: conteos absolutos (izquierda) y normalizada por fila (derecha).}
+\label{fig:cm}
+\end{figure}
+
+\subsection{Importancia de características (SHAP)}\label{sec:shap}
+Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: las features de texto (TF-IDF de título y tags) dominan, lo que es consistente con el ablation study, donde el texto solo alcanza F1=0.625 frente a 0.580 de los metadatos solos.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/shap_summary.png}
+\caption{Importancia SHAP global (top 20 features, media $|\text{SHAP}|$ sobre todas las clases).}
+\label{fig:shap}
+\end{figure}
+
+Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importancia para \textit{disturbing} y \textit{restricted}. Para \textit{disturbing}, los términos del título (``peppa'', ``elsa'') y los metadatos de engagement (\texttt{like\_count\_log1p}, \texttt{duration\_seconds}) son las señales más fuertes. Para \textit{restricted}, los conteos de interacción dominan sobre el texto, ya que el vocabulario explícito es poco frecuente en el dataset.
+
+\begin{table}[!t]
+\caption{Top 5 features SHAP para las clases críticas}
+\begin{center}
+\footnotesize
+\begin{tabular}{|l|l|r|}
+\hline
+\textbf{Clase} & \textbf{Feature} & \textbf{$|\overline{\text{SHAP}}|$} \\
+\hline
+\multirow{5}{*}{Disturbing}
+ & like\_count\_log1p & 0.275 \\
+ & category\_id (1) & 0.224 \\
+ & duration\_seconds & 0.222 \\
+ & licensed\_content & 0.150 \\
+ & title\_chars & 0.148 \\
+\hline
+\multirow{5}{*}{Restricted}
+ & like\_count\_log1p & 1.211 \\
+ & dislike\_count\_log1p & 0.811 \\
+ & view\_count\_log1p & 0.600 \\
+ & comment\_count\_log1p & 0.288 \\
+ & licensed\_content & 0.178 \\
+\hline
+\end{tabular}
+\label{tab:shap}
+\end{center}
+\end{table}
+
+\subsection{Análisis de errores}\label{sec:errores}
+Se analizaron los falsos negativos de las dos clases críticas sobre los 955 videos de prueba:
+
+\textbf{Disturbing} (55 FN, 28.6\% no detectados): la mayoría se predice como \textit{suitable} (29) o \textit{irrelevant} (17). Los títulos de los falsos negativos son genéricos —sin señales textuales explícitas de contenido inapropiado—, como \emph{``JooJooTV 4K | THE LITTERER | Kids Cartoons | Best Cartoons For Kids 2019''} (predicho como \textit{suitable} con 95\% de confianza) o \emph{``Scary Shark | Nursery Rhymes | Scary Videos For Kids''} (predicho como \textit{suitable} con 92\%). Estos casos ilustran el límite fundamental del enfoque basado en texto: un creador malintencionado puede usar vocabulario infantil legítimo para enmascarar contenido perturbador.
+
+\textbf{Restricted} (36 FN, 45.0\% no detectados): se predice principalmente como \textit{irrelevant} (22) o \textit{suitable} (10). Los títulos mezclando personajes animados con contenido adulto —\emph{``Spider Man vs Elsa | Frozen Elsa and Spider Man GTA 5''}— confunden el modelo porque comparten vocabulario con \textit{disturbing} o con \textit{suitable}. Esto está alineado con la Consideración ética de la Sección~\ref{sec:etica}: estos falsos negativos representan el mayor riesgo del sistema.
+
+La confusión entre \textit{irrelevant} y \textit{restricted} (24 FP en restricted, 22 FN de restricted hacia irrelevant) sugiere que el texto no siempre distingue contenido adulto disfrazado. Los metadatos de engagement ayudan —\textit{restricted} tiene medianas de vistas y likes muy superiores (Tabla~\ref{tab:clase})— pero no eliminan la ambigüedad.
 
 % =====================================================================
 % DISCUSIÓN Y LIMITACIONES  [ADRIÁN]
@@ -669,7 +812,7 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 
 \subsection{Consideraciones éticas}\label{sec:etica}
 \begin{itemize}
-\item \textbf{Costo asimétrico de los errores:} un falso negativo en \textit{disturbing} o \textit{restricted} significa que un niño de 1 a 5 años puede ver contenido violento, sexual o aterrador presentado como infantil, mientras que un falso positivo genera, como mucho, una revisión innecesaria. Por eso la evaluación prioriza el recall de estas dos clases frente a la exactitud global.
+\item \textbf{Costo asimétrico de los errores:} un falso negativo en \textit{disturbing} o \textit{restricted} significa que un niño de 1 a 5 años puede ver contenido violento, sexual o aterrador presentado como infantil, mientras que un falso positivo genera, como mucho, una revisión innecesaria. Por eso la evaluación prioriza el recall de estas dos clases frente a la exactitud global. El análisis de errores (Sección~\ref{sec:errores}) confirma este riesgo: el 28.6\% de los videos \textit{disturbing} no se detectaron, muchos con títulos de apariencia infantil como \emph{``JooJooTV 4K | THE LITTERER | Kids Cartoons''} (predicho como \textit{suitable} con 95\% de confianza); y el 45.0\% de los videos \textit{restricted} tampoco se detectaron, incluyendo títulos como \emph{``Spider Man vs Elsa | Frozen Elsa and Spider Man GTA 5''} (predicho como \textit{suitable}).
 \item \textbf{Apoyo, no reemplazo, de la moderación humana:} el modelo está pensado para priorizar videos para revisión humana, no para restringir o eliminar contenido de forma automática. Una decisión automática sin revisión afectaría a creadores legítimos: la Tabla~\ref{tab:tags} muestra que el contenido infantil apropiado y el perturbador comparten personajes y vocabulario (por ejemplo, el 31.0\% de los videos con el tag \textit{elsa} son \textit{suitable} y el 60.0\% \textit{disturbing}), por lo que los falsos positivos recaerían precisamente sobre contenido infantil legítimo.
 \item \textbf{Sesgos de representación:} el modelo solo conoce los canales, idiomas y tipos de contenido presentes en el ground truth. Contenido de comunidades o idiomas poco representados puede clasificarse peor, y estos errores no son visibles en las métricas globales.
 \item \textbf{Transparencia:} un sistema de apoyo a la moderación debe poder explicar sus decisiones. Por ello se priorizan representaciones interpretables (términos de TF-IDF, longitud del título, métricas de interacción) y se analiza la importancia de las características, de modo que un moderador pueda ver qué señales motivaron cada alerta.
@@ -677,21 +820,22 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 \end{itemize}
 % Pendiente para la versión final: ilustrar el costo asimétrico con 2-3 falsos
 % negativos reales en disturbing del análisis de errores de Mafer (Sección VI).
+% -> YA INCORPORADO en \ref{sec:etica} con ejemplos de la Sección VI.
 
 % =====================================================================
 % CONCLUSIONES  --  PENDIENTE (responder PI1-PI3)
 % =====================================================================
 
 % =====================================================================
-% SIGUIENTES PASOS  [MAFER]
+% TRABAJO FUTURO
 % =====================================================================
-\section{Propuesta de Siguientes Pasos}\label{sec:next}
+\section{Trabajo Futuro}\label{sec:next}
+Los resultados obtenidos sugieren las siguientes líneas de mejora:
 \begin{enumerate}
-\item \textbf{Feature Engineering:} aplicar $\log(1+x)$ a las métricas de interacción, crear razones (likes/vistas, comentarios/vistas) e implementar técnicas de NLP para analizar títulos, descripciones y tags (normalizar tags a minúsculas, TF-IDF o embeddings). Se excluyen \texttt{prediction}, \texttt{is\_ground\_truth}, \texttt{video\_id}, \texttt{channel\_id} y \texttt{channel\_title} como características.
-\item \textbf{Modelado baseline:} definir un baseline de referencia (clasificador que predice siempre la clase mayoritaria) y comparar modelos que permitan aislar el aporte de cada tipo de información: por ejemplo, regresión logística con TF-IDF para el texto, un modelo de árboles (LightGBM o Random Forest) para los metadatos y un modelo combinado de ambos. La selección final se justificará en la segunda etapa según los resultados. El desbalance de clases se abordará con class weights o SMOTE.
-\item \textbf{Modelos avanzados:} explorar embeddings preentrenados o transformers para texto solo si el texto resulta ser la señal más fuerte en la etapa anterior. El uso de thumbnails (CNN) queda como extensión.
-\item \textbf{Validación:} reservar cerca del 20\% del ground truth como conjunto de prueba, estratificado por clase y agrupado por canal (Sección~\ref{sec:leak}), y aplicar validación cruzada con el mismo criterio sobre el resto. La evaluación se centrará en el F1 macro y por clase, en lugar de la exactitud, que se vería distorsionada por el desbalance de hasta 4.6 veces a favor de la clase mayoritaria, y se priorizará el recall en las clases críticas (\textit{restricted} y \textit{disturbing}). Las transformaciones (imputación, TF-IDF, SMOTE) se ajustarán solo con los datos de entrenamiento para prevenir fuga de datos.
-\item \textbf{Pruebas en datasets adicionales:} aplicar el modelo final a los conjuntos adicionales, excluyendo los videos que ya están en el ground truth (Sección~\ref{sec:leak}). Como no tienen etiquetas humanas, sirven como comprobación de consistencia (proporción de videos predichos como inapropiados y acuerdo con \texttt{prediction}), no para medir la eficacia, que se mide en el conjunto de prueba reservado.
+\item \textbf{Incorporación de miniaturas (thumbnails):} el modelo actual no observa el contenido visual. Una CNN sobre las miniaturas podría detectar señales que el texto no puede capturar (personajes en situaciones perturbadoras, colores o composiciones atípicas), especialmente para los 55 falsos negativos de \textit{disturbing} con títulos genéricos.
+\item \textbf{Embeddings preentrenados:} sustituir TF-IDF por embeddings de modelos de lenguaje (BERT, multilingual) para capturar semántica contextual y manejar mejor el vocabulario infantil mezclado con contenido adulto, que es precisamente donde el modelo falla en \textit{restricted} (45\% de falsos negativos).
+\item \textbf{Actualización del dataset:} los datos son de 2014--2018 y YouTube retiró el contador público de dislikes en 2021~\cite{ytdislikes}. Un dataset más reciente permitiría evaluar la vigencia del modelo y reducir el sesgo temporal.
+\item \textbf{Pruebas en conjuntos adicionales:} aplicar el modelo final a \texttt{elsagate\_related}, \texttt{other\_child\_related}, \texttt{random\_videos} y \texttt{popular\_videos}, excluyendo los videos del ground truth, para responder PI2 y PI3 como comprobaciones de consistencia frente al clasificador original~\cite{papadamou}.
 \end{enumerate}
 
 % =====================================================================

@@ -42,7 +42,15 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `splits.py`: Folds de validación cruzada (5, estratificados y agrupados por canal) dentro de train; genera `folds_v1.csv` y `reports/folds_report.md`. Expone `load_train_test()` y `predefined_cv()` para que todos los modelos usen la misma partición.
   * `features.py`: Representación de texto (TF-IDF de título, descripción y tags) y de metadatos como `ColumnTransformer`; `build_preprocessor("text" | "metadata" | "combined", svd_components=None)` para el ablation study (`reports/text_features.md`).
   * `leakage_check.py`: Compara validación aleatoria vs. agrupada por canal con un modelo TF-IDF + regresión logística (`reports/leakage_check.md`).
+  * `baselines.py`: Modelos baseline (Dummy, LogReg + TF-IDF, Naive Bayes); genera `reports/baselines.md`.
+  * `models.py`: Modelos tabulares, combinado y ablation study (Random Forest, LightGBM, LogReg combinado); genera `reports/models.md`.
+  * `tuning.py`: Ajuste de hiperparámetros con `RandomizedSearchCV` y evaluación final en test; genera `reports/tuning.md`, `reports/final_model.md`, `reports/test_predictions.csv` y `models/final.joblib`.
+  * `evaluation.py`: Curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera `reports/evaluation.md` y las figuras en `reports/figures/`. Si `models/final.joblib` no existe lo re-entrena automáticamente.
+  * `interpretability.py`: SHAP values con `LinearExplainer`, importancia de features por clase e análisis cualitativo de falsos negativos/positivos; genera `reports/interpretability.md` y figuras SHAP en `reports/figures/`.
   * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3).
+  * `reports/`: Reportes Markdown generados automáticamente por los scripts anteriores.
+  * `reports/figures/`: Figuras PNG (ROC, PR, matriz de confusión, SHAP) listas para el paper IEEE.
+  * `models/`: Modelo final serializado (`final.joblib`, ~2.5 MB). Excluido de git por `.gitignore`; regenerar con `python -m modeling.tuning` o `python -m modeling.evaluation`.
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
   * `convert_json_to_csv.py`: Script de utilidad para transformar los archivos JSON crudos a formato CSV.
   * `dataset_groundtruth.csv`: Dataset principal anotado manualmente por humanos (4,797 videos, 4 clases).
@@ -92,6 +100,73 @@ No es necesario descargar nada: al clonar el repositorio, los scripts y notebook
 ### 3. Datos Crudos JSON (Comprimidos)
 * **Ubicación:** `dataset_disturbed_youtube _for_kids/` (`groundtruth_videos.json.gz`, `popular_videos.json.gz` y las carpetas `elsagate_related_videos_parts/`, `other_child_related_videos_parts/` y `random_videos_parts/`).
 * Contiene los archivos originales recolectados en formato JSON comprimidos en `.json.gz` (groundtruth, popular, elsagate_related, other_child_related y random).
+
+---
+
+## Estado del Proyecto
+
+| Fase | Responsable | Estado | Entregable |
+|---|---|---|---|
+| Preprocesamiento de datos | Mariela | ✅ Completo | `data_processing/preprocessing.py`, `dataset_features_v1.csv` |
+| Feature engineering de texto | Mariela | ✅ Completo | `modeling/features.py` |
+| Split y validación | Adrián | ✅ Completo | `modeling/splits.py`, `folds_v1.csv`, `reports/folds_report.md` |
+| Modelos baseline | Leo | ✅ Completo | `modeling/baselines.py`, `reports/baselines.md` |
+| Modelos tabulares y combinado | Leo | ✅ Completo | `modeling/models.py`, `modeling/tuning.py`, `reports/models.md`, `reports/tuning.md` |
+| Evaluación y métricas | Mafer | ✅ Completo | `modeling/evaluation.py`, `reports/evaluation.md`, figuras ROC/PR/CM |
+| Interpretabilidad y errores | Mafer | ✅ Completo | `modeling/interpretability.py`, `reports/interpretability.md`, figuras SHAP |
+| Pruebas en datasets adicionales | Adrián | ⏳ Pendiente | `modeling/additional_inference.py` (requiere `models/final.joblib`) |
+| Discusión, ética y limitaciones | Adrián | ⏳ Pendiente | Secciones 7 y 8 del paper |
+| Redacción e integración del paper | Mariela (coord.) | ⏳ Pendiente | Borrador IEEE completo |
+| Repositorio y reproducibilidad | Leo | ⏳ Pendiente | README final, requirements actualizados |
+| Presentación P2 | Todo el equipo | ⏳ Pendiente | Slides + guión ensayado |
+
+---
+
+## Resultados del Modelo Final (Etapa 2)
+
+**Modelo:** Regresión Logística combinada (TF-IDF + metadatos), `C=1.16`, `class_weight="balanced"`.
+Seleccionado por F1 macro en validación cruzada agrupada por canal (5 folds). Evaluado **una sola vez** sobre 955 videos de test (canales no vistos en entrenamiento).
+
+### Comparación de modelos (CV en train, 3 842 videos)
+
+| Modelo | Vista | F1 macro (CV) | Recall disturbing | Recall restricted |
+|---|---|---:|---:|---:|
+| Dummy (clase mayoritaria) | texto | 0.145 ± 0.004 | 0.000 | 0.000 |
+| Naive Bayes + TF-IDF | texto | 0.659 ± 0.033 | 0.670 | 0.254 |
+| LogReg + TF-IDF | texto | 0.672 ± 0.025 | 0.637 | 0.359 |
+| Solo texto (LightGBM + SVD 200) | texto | 0.625 ± 0.002 | 0.609 | 0.157 |
+| Random Forest (metadatos) | metadatos | 0.575 ± 0.027 | 0.457 | 0.323 |
+| LightGBM (metadatos) | metadatos | 0.580 ± 0.020 | 0.496 | 0.326 |
+| LightGBM combinado (SVD 200 + metadatos) | combinado | 0.682 ± 0.020 | 0.621 | 0.331 |
+| **LogReg combinado (TF-IDF + metadatos)** | combinado | **0.710 ± 0.023** | **0.664** | **0.566** |
+
+### Métricas en test (955 videos, canales no vistos)
+
+| Métrica | Valor |
+|---|---:|
+| F1 macro | **0.725** |
+| Recall macro | 0.724 |
+| Accuracy | 0.775 |
+| AUC macro ROC (OvR) | **0.914** |
+| AP macro Precision-Recall | **0.772** |
+
+| Clase | Precision | Recall | F1 | AUC | AP | Videos |
+|---|---:|---:|---:|---:|---:|---:|
+| disturbing | 0.801 | 0.714 | 0.755 | 0.929 | 0.848 | 192 |
+| irrelevant | 0.794 | 0.837 | 0.815 | 0.921 | 0.873 | 363 |
+| restricted | 0.500 | 0.550 | 0.524 | 0.878 | 0.483 | 80 |
+| suitable | 0.815 | 0.797 | 0.806 | 0.929 | 0.885 | 320 |
+
+Matriz de confusión (filas = real, columnas = predicción):
+
+| Real \ Predicho | disturbing | irrelevant | restricted | suitable |
+|---|---:|---:|---:|---:|
+| disturbing | 137 | 17 | 9 | 29 |
+| irrelevant | 16 | 304 | 24 | 19 |
+| restricted | 4 | 22 | 44 | 10 |
+| suitable | 14 | 40 | 11 | 255 |
+
+> Los reportes completos y las figuras (curvas ROC/PR, matrices de confusión, SHAP) se encuentran en `modeling/reports/` y `modeling/reports/figures/`.
 
 ---
 
@@ -147,11 +222,16 @@ pip install -r requirements.txt
    * Genera `data_processing/dataset_features_v1.csv` desde `dataset_groundtruth.csv`.
    * Imputa con estadísticas ajustadas solo en train y crea un fold estratificado y agrupado por canal (3,842 train / 955 test con scikit-learn 1.7.2). `video_id`, `channel_id` y `split` son metadatos: `channel_id` sirve para agrupar la validación cruzada dentro de train y ninguna de las tres debe usarse como feature.
 4. **Partición y validación (`modeling/`):**
-   * `python -m modeling.splits` regenera `modeling/folds_v1.csv` y el reporte de folds.
-   * `python -m modeling.features` genera el reporte de la representación de texto.
-   * `python -m modeling.leakage_check` reproduce la comparación validación aleatoria vs. agrupada por canal.
-   * `python -m modeling.additional_inference --model <pipeline.joblib>` evalúa la consistencia en los conjuntos adicionales (usar `--demo --limit-per-part 5000` para una prueba rápida).
-   * Ejecutar los comandos desde la raíz del repositorio.
+   * `python -m modeling.splits` — regenera `modeling/folds_v1.csv` y el reporte de folds.
+   * `python -m modeling.features` — genera el reporte de la representación de texto.
+   * `python -m modeling.leakage_check` — reproduce la comparación validación aleatoria vs. agrupada por canal.
+   * `python -m modeling.baselines` — entrena y evalúa los modelos baseline (CV sobre train).
+   * `python -m modeling.models` — entrena los modelos tabulares, combinado y ablation study (CV sobre train).
+   * `python -m modeling.tuning` — ajuste de hiperparámetros y evaluación final en test; guarda `modeling/models/final.joblib`.
+   * `python -m modeling.evaluation` — curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera figuras en `modeling/reports/figures/`. Si `final.joblib` no existe, lo re-entrena automáticamente.
+   * `python -m modeling.interpretability` — SHAP values, importancia de features y análisis cualitativo de errores; genera figuras SHAP en `modeling/reports/figures/`.
+   * `python -m modeling.additional_inference --model modeling/models/final.joblib` — evalúa la consistencia en los conjuntos adicionales (usar `--demo --limit-per-part 5000` para una prueba rápida).
+   * Ejecutar todos los comandos desde la raíz del repositorio.
 
 ### 4. Uso de la partición en los modelos
 
