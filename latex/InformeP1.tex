@@ -792,6 +792,40 @@ Se analizaron los falsos negativos de las dos clases críticas sobre los 955 vid
 
 La confusión entre \textit{irrelevant} y \textit{restricted} (24 FP en restricted, 22 FN de restricted hacia irrelevant) sugiere que el texto no siempre distingue contenido adulto disfrazado. Los metadatos de engagement ayudan —\textit{restricted} tiene medianas de vistas y likes muy superiores (Tabla~\ref{tab:clase})— pero no eliminan la ambigüedad.
 
+% ----- [ADRIÁN] VI.D Consistencia en conjuntos adicionales
+\subsection{Consistencia en conjuntos adicionales}\label{sec:consistencia}
+El modelo final se aplicó a los 839,905 videos de los conjuntos adicionales que no forman parte del ground truth (\texttt{modeling/additional\_inference.py}), con las mismas transformaciones y los valores de imputación de entrenamiento. Para comparar con la predicción binaria del clasificador original~\cite{papadamou}, un video se considera \textit{inapropiado} si el modelo predice \textit{disturbing} o \textit{restricted}. Como no hay etiquetas humanas, la Tabla~\ref{tab:consist} mide consistencia entre ambos clasificadores y no eficacia.
+
+\begin{table}[!t]
+\caption{Videos predichos como inapropiados fuera del ground truth: modelo final vs.\ clasificador original}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+\textbf{Conjunto} & \textbf{Videos} & \textbf{Modelo} & \textbf{Original} & \textbf{Acuerdo} & \textbf{Kappa} \\
+\hline
+Elsagate & 230,873 & 21.78\% & 0.55\% & 77.87\% & $-0.002$ \\
+\hline
+Other child & 137,043 & 11.92\% & 0.43\% & 87.67\% & $-0.007$ \\
+\hline
+Random & 462,382 & 6.74\% & 0.73\% & 92.62\% & 0.000 \\
+\hline
+Popular & 9,607 & 12.00\% & 0.00\% & 88.00\% & 0.000 \\
+\hline
+\end{tabular}
+\label{tab:consist}
+\end{center}
+\end{table}
+
+\textbf{PI2 (\texttt{elsagate\_related}):} el modelo predice como inapropiados el 21.78\% de los videos (8.59\% \textit{disturbing} y 13.19\% \textit{restricted}), unas 40 veces más que el clasificador original (0.55\%). Por tanto, \textbf{H2 no se cumple}. El acuerdo de 77.87\% se debe casi por completo a los videos que ambos consideran apropiados: el kappa de Cohen es prácticamente 0, y de los 1,260 videos que marcó el clasificador original, el modelo coincide solo en 227 (18.0\%).
+
+\textbf{PI3 (\texttt{other\_child\_related}, \texttt{random}, \texttt{popular}):} las proporciones del modelo (11.92\%, 6.74\% y 12.00\%) son también un orden de magnitud mayores que las del clasificador original, por lo que \textbf{H3 tampoco se cumple}. Sí se conserva el orden de riesgo esperado: la proporción es máxima en \texttt{elsagate\_related}, y la clase \textit{disturbing} (la más ligada al fenómeno Elsagate) cae de 8.59\% en ese conjunto a 1.20\% en \texttt{random}.
+
+\textbf{Revisión cualitativa de los desacuerdos:} el exceso de alertas proviene sobre todo de \textit{restricted}, que el modelo asigna a contenido general para adultos que no se dirige a niños, como música (\emph{``When I Was Your Man - Bruno Mars lyric''}), deportes (\emph{``Super Bowl XLIX: Patriots vs. Seahawks highlights''}), lucha libre o videos en idiomas poco presentes en el ground truth. Estos videos tienen conteos de interacción altos, que son precisamente las características con mayor peso SHAP para \textit{restricted} (Tabla~\ref{tab:shap}). En el ground truth casi todo el contenido es infantil o lo parece, por lo que el modelo no aprendió a separar ``contenido para adultos inofensivo'' de ``contenido restringido''; además, \texttt{class\_weight="balanced"} favorece las clases minoritarias. A la inversa, varias alertas del clasificador original que el modelo no reproduce parecen errores de ese clasificador (por ejemplo, un episodio de Peppa Pig en ruso, un video eliminado o videos de fútbol). Los casos en que ambos coinciden sí incluyen ejemplos típicos de Elsagate, como \emph{``Minecraft SPONGEBOB.EXE - JUMPING INTO SPONGEBOBS NIGHTMARE IS REALLY SCARY!!''}.
+
+En conjunto, el modelo se desplaza hacia más alertas cuando cambia la distribución de los datos. Es útil para priorizar la revisión humana de contenido infantil, pero no debería aplicarse sin recalibrar sobre plataformas abiertas, donde la mayoría del contenido no es infantil.
+
 % =====================================================================
 % DISCUSIÓN Y LIMITACIONES  [ADRIÁN]
 % =====================================================================
@@ -835,7 +869,7 @@ Los resultados obtenidos sugieren las siguientes líneas de mejora:
 \item \textbf{Incorporación de miniaturas (thumbnails):} el modelo actual no observa el contenido visual. Una CNN sobre las miniaturas podría detectar señales que el texto no puede capturar (personajes en situaciones perturbadoras, colores o composiciones atípicas), especialmente para los 55 falsos negativos de \textit{disturbing} con títulos genéricos.
 \item \textbf{Embeddings preentrenados:} sustituir TF-IDF por embeddings de modelos de lenguaje (BERT, multilingual) para capturar semántica contextual y manejar mejor el vocabulario infantil mezclado con contenido adulto, que es precisamente donde el modelo falla en \textit{restricted} (45\% de falsos negativos).
 \item \textbf{Actualización del dataset:} los datos son de 2014--2018 y YouTube retiró el contador público de dislikes en 2021~\cite{ytdislikes}. Un dataset más reciente permitiría evaluar la vigencia del modelo y reducir el sesgo temporal.
-\item \textbf{Pruebas en conjuntos adicionales:} aplicar el modelo final a \texttt{elsagate\_related}, \texttt{other\_child\_related}, \texttt{random\_videos} y \texttt{popular\_videos}, excluyendo los videos del ground truth, para responder PI2 y PI3 como comprobaciones de consistencia frente al clasificador original~\cite{papadamou}.
+\item \textbf{Recalibración ante el cambio de distribución:} la Sección~\ref{sec:consistencia} muestra que el modelo genera muchas más alertas fuera del ground truth, sobre todo en \textit{restricted}. Ampliar el entrenamiento con contenido general no infantil, ajustar los umbrales de decisión por clase o etiquetar a mano una muestra de los desacuerdos permitiría medir y reducir estos falsos positivos.
 \end{enumerate}
 
 % =====================================================================

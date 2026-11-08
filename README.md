@@ -114,7 +114,7 @@ No es necesario descargar nada: al clonar el repositorio, los scripts y notebook
 | Modelos tabulares y combinado | Leo | ✅ Completo | `modeling/models.py`, `modeling/tuning.py`, `reports/models.md`, `reports/tuning.md` |
 | Evaluación y métricas | Mafer | ✅ Completo | `modeling/evaluation.py`, `reports/evaluation.md`, figuras ROC/PR/CM |
 | Interpretabilidad y errores | Mafer | ✅ Completo | `modeling/interpretability.py`, `reports/interpretability.md`, figuras SHAP |
-| Pruebas en datasets adicionales | Adrián | ⏳ Pendiente | `modeling/additional_inference.py` (requiere `models/final.joblib`) |
+| Pruebas en datasets adicionales | Adrián | ✅ Completo | `modeling/additional_inference.py`, `reports/additional_consistency.md` |
 | Discusión, ética y limitaciones | Adrián | ⏳ Pendiente | Secciones 7 y 8 del paper |
 | Redacción e integración del paper | Mariela (coord.) | ⏳ Pendiente | Borrador IEEE completo |
 | Repositorio y reproducibilidad | Leo | ⏳ Pendiente | README final, requirements actualizados |
