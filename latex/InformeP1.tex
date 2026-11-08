@@ -575,8 +575,34 @@ Suitable & tom and jerry, cartoon, kids, animation, animated cartoon \\
 No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth} (codifican el proceso de clasificación o de anotación), \texttt{source\_dataset} (constante), \texttt{favorite\_count} (siempre 0), \texttt{published\_at} y \texttt{duration\_iso} (redundante con \texttt{duration\_seconds}), ni los identificadores \texttt{video\_id}, \texttt{channel\_id} y \texttt{channel\_title}, para que el modelo no memorice canales (Sección~\ref{sec:leak}); \texttt{channel\_id} se conserva solo para agrupar la partición. Las mismas transformaciones, con los valores de imputación de entrenamiento, se aplican a los conjuntos adicionales.
 
 % =====================================================================
-% METODOLOGÍA Y MODELOS  [LEO]  --  PENDIENTE (IV.A baseline, IV.B modelos, IV.C hiperparámetros)
+% METODOLOGÍA Y MODELOS  [LEO]
 % =====================================================================
+\section{Metodología y Modelos}\label{sec:metodologia}
+Todos los modelos se implementaron con scikit-learn y LightGBM como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
+
+\subsection{Modelos baseline}\label{sec:baseline}
+\begin{itemize}
+\item \textbf{Dummy (clase mayoritaria):} siempre predice \textit{irrelevant}. Es el piso de referencia de H1: cualquier modelo útil debe superarlo con claridad en F1 macro.
+\item \textbf{Regresión logística + TF-IDF:} modelo lineal estándar para clasificación de texto disperso y de alta dimensión, con pesos de clase balanceados y $C=1$.
+\item \textbf{Naive Bayes multinomial + TF-IDF:} alternativa probabilística muy rápida, habitual como baseline de texto ($\alpha=0.1$).
+\end{itemize}
+Los dos baselines de texto miden cuánto se puede lograr solo con el título, la descripción y los tags, sin las variables de interacción.
+
+\subsection{Modelos comparados}\label{sec:modelos}
+\begin{itemize}
+\item \textbf{Random Forest y LightGBM sobre metadatos:} modelos de árboles adecuados para variables tabulares con escalas y asimetrías distintas y con interacciones no lineales (por ejemplo, entre duración y vistas). Random Forest usa 500 árboles; LightGBM, \textit{gradient boosting} con 400 árboles y \texttt{learning\_rate} de 0.05.
+\item \textbf{LightGBM combinado:} el bloque TF-IDF (38,256 columnas dispersas) se reduce a 200 componentes con \texttt{TruncatedSVD}, porque los árboles no aprovechan bien matrices tan dispersas, y se concatena con los metadatos.
+\item \textbf{Regresión logística combinada:} usa el TF-IDF completo junto con los metadatos estandarizados. Mantiene toda la información del texto y permite interpretar cada coeficiente, lo que es importante para la transparencia (Sección~\ref{sec:etica}).
+\end{itemize}
+Además, un \textit{ablation study} entrena el mismo LightGBM con solo texto, solo metadatos y ambos, para medir el aporte de cada fuente de información. Todos los modelos usan \texttt{class\_weight="balanced"} (Sección~\ref{sec:desbalance}).
+
+\subsection{Selección de hiperparámetros}\label{sec:hiper}
+Los dos mejores modelos combinados se ajustaron con \texttt{RandomizedSearchCV} (20 combinaciones, semilla 42) sobre las mismas cinco particiones agrupadas del conjunto de entrenamiento, con el F1 macro medio como criterio:
+\begin{itemize}
+\item \textbf{Regresión logística:} $C \in [0.05, 20]$ con distribución log-uniforme, ya que la regularización actúa en escala multiplicativa. Mejor valor: $C=1.16$.
+\item \textbf{LightGBM:} número de árboles $\in [200, 1000]$, \texttt{learning\_rate} $\in [0.01, 0.2]$, \texttt{num\_leaves} $\in [8, 64]$, \texttt{min\_child\_samples} $\in [5, 60]$, \texttt{colsample\_bytree} $\in [0.4, 1.0]$ y \texttt{reg\_lambda} $\in [0.001, 10]$. La mejor combinación (227 árboles, 14 hojas y $\lambda=2.5$) favorece modelos más simples y regularizados.
+\end{itemize}
+La regresión logística ajustada obtuvo un F1 macro de $0.710 \pm 0.024$ frente a $0.698 \pm 0.027$ de LightGBM, y un recall en \textit{restricted} de 0.558 frente a 0.478, por lo que fue elegida como modelo final. Se reentrenó con todo el conjunto de entrenamiento y se evaluó una sola vez en prueba (Sección~\ref{sec:final}).
 
 % =====================================================================
 % DISEÑO EXPERIMENTAL Y EVALUACIÓN
