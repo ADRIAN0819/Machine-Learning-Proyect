@@ -10,8 +10,9 @@ Tres vistas, para el ablation study (texto vs. metadatos vs. combinado):
 
 * ``"text"``: TF-IDF de título (1-2 gramas), descripción (1-2 gramas) y tags
   (cada tag completo es un token, p. ej. ``"for kids"``, como en el EDA).
-* ``"metadata"``: duración, conteos en log(1+x), razones por vista, longitud
-  del título y one-hot de categoría, definición, subtítulos y licencia.
+* ``"metadata"``: duración (solo estandarizada, sin log), conteos en
+  log(1+x), razones por vista, longitud del título y one-hot de categoría,
+  definición, subtítulos y licencia.
 * ``"combined"``: ambas. Con ``svd_components`` el texto se reduce con
   ``TruncatedSVD`` (útil para LightGBM / Random Forest).
 
@@ -62,10 +63,6 @@ View = Literal["text", "metadata", "combined"]
 def split_tags(value: str) -> list[str]:
     """Tokenizador de tags: separa por ``|`` y conserva cada tag completo."""
     return [tag for tag in value.split("|") if tag]
-
-
-def _log_duration(values):
-    return np.log1p(np.asarray(values, dtype=float))
 
 
 def text_vectorizers(

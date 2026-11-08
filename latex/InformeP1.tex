@@ -84,14 +84,7 @@ Debido al enorme flujo de contenido, con miles de millones de videos subidos y c
 
 El proyecto dispone de un conjunto de datos de referencia con 4,797 videos etiquetados manualmente en cuatro clases: \textit{suitable}, \textit{disturbing}, \textit{restricted} e \textit{irrelevant}~\cite{papadamou}, cuyas definiciones se detallan en la Sección~\ref{sec:target}. Además, se cuenta con un corpus más amplio para extender el análisis a gran escala. El análisis exploratorio de los datos revela patrones en títulos, etiquetas, duración, categorías de YouTube y métricas de interacción que diferencian parcialmente estas clases. El principal desafío del proyecto es distinguir contenido infantil legítimo de aquellos videos engañosos que, bajo apariencia de material infantil (personajes conocidos, colores, juguetes), ocultan elementos inadecuados~\cite{uscm}. Esta tarea es compleja porque los creadores malintencionados pueden modificar ligeramente el contenido y las plataformas públicas evolucionan continuamente.
 
-La motivación del proyecto combina varios factores clave:
-\begin{itemize}
-\item Alto volumen de contenido infantil en YouTube, lo que hace prácticamente imposible su supervisión manual total.
-\item Dificultad para filtrar videos engañosos que parecen inocuos pero contienen material perturbador.
-\item Necesidad de herramientas automáticas que asistan la identificación y clasificación de videos para niños.
-\item Importancia social de proteger a los niños de contenidos inapropiados y facilitar el trabajo de padres, tutores y plataformas.
-\end{itemize}
-El objetivo es crear una herramienta de apoyo que agilice la detección de videos sospechosos, analice volúmenes masivos de información y contribuya a una clasificación más eficiente. No se busca reemplazar la supervisión humana, sino ayudarla haciendo más rápida y precisa la preclasificación de contenido potencialmente problemático.
+La motivación combina el alto volumen de contenido infantil, que hace inviable la supervisión manual total; la dificultad de filtrar videos engañosos que parecen inocuos; y la importancia social de proteger a los niños y facilitar el trabajo de padres, tutores y plataformas. El objetivo es crear una herramienta de apoyo que agilice la detección de videos sospechosos, analice volúmenes masivos de información y contribuya a una clasificación más eficiente. No se busca reemplazar la supervisión humana, sino ayudarla haciendo más rápida y precisa la preclasificación de contenido potencialmente problemático.
 
 \subsection{Objetivos del proyecto}\label{sec:obj}
 % [EQUIPO]
@@ -708,6 +701,7 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 \begin{itemize}
 \item \textbf{Solo metadatos:} el modelo no observa el video ni el audio. Un video perturbador con título, descripción y tags inocuos es, por construcción, indetectable para este enfoque, y un creador malintencionado puede modificar su texto para evadirlo, como se describe en el fenómeno Elsagate~\cite{uscm}.
 \item \textbf{Vigencia temporal:} el 89.3\% de los videos del ground truth se publicó entre 2014 y 2018, y los más recientes son de 2019. Desde entonces cambiaron las tendencias de contenido infantil y la propia plataforma: por ejemplo, en noviembre de 2021 YouTube dejó de mostrar públicamente el número de dislikes~\cite{ytdislikes}, una de las variables del modelo, que podría no estar disponible para videos actuales.
+\item \textbf{Duración sin transformar:} a diferencia de los conteos, \texttt{duration\_seconds} entra al modelo solo estandarizada, sin $\log(1+x)$, y conserva 173 outliers (3.6\%, Tabla~\ref{tab:out}); en un modelo lineal, unos pocos videos muy largos pueden dominar su coeficiente. No se corrigió para no cambiar el modelo ya evaluado en prueba.
 \item \textbf{Métricas de interacción como fotografía:} vistas, likes y comentarios se midieron una sola vez y dependen de la antigüedad del video, por lo que un video reciente con pocas vistas no es comparable con uno de años de antigüedad.
 \item \textbf{Etiquetas y tamaño:} el ground truth tiene 4,797 videos y solo 419 de la clase \textit{restricted}; las etiquetas provienen de anotadores humanos y la frontera entre \textit{suitable} y \textit{disturbing} es en parte subjetiva.
 \item \textbf{Conjuntos adicionales sin etiquetas:} fuera del ground truth solo existe la predicción binaria del clasificador original, que no es una etiqueta verdadera; además, el corpus consolidado asigna un único conjunto de origen a cada video. Por eso las preguntas PI2 y PI3 se responden como comprobaciones de consistencia y no como medidas de eficacia.
