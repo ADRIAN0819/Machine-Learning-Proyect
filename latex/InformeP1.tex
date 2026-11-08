@@ -61,8 +61,15 @@ adrian.urbina@utec.edu.pe}
 \maketitle
 
 % =====================================================================
-% RESUMEN  --  PENDIENTE
+% RESUMEN
 % =====================================================================
+\begin{abstract}
+Muchos videos de YouTube con apariencia infantil contienen escenas violentas, sexuales o perturbadoras (fenómeno Elsagate), y la revisión humana no alcanza para el volumen de la plataforma. Este trabajo estudia si es posible clasificar videos dirigidos a niños como \textit{suitable}, \textit{disturbing}, \textit{restricted} o \textit{irrelevant} usando solo sus metadatos: título, descripción, tags, duración y métricas de interacción. Se usa el ground truth de 4,797 videos etiquetados por humanos de Papadamou \textit{et al.}, con una partición y una validación cruzada agrupadas por canal para evitar que el modelo reconozca canales ya vistos. Se compararon un baseline de clase mayoritaria, regresión logística y Naive Bayes sobre TF-IDF, Random Forest y LightGBM sobre metadatos, y modelos combinados de texto y metadatos. El mejor modelo, una regresión logística sobre TF-IDF y metadatos, alcanzó en prueba un F1 macro de 0.725 (frente a 0.145 del baseline) y un AUC macro de 0.914, aunque no detectó el 28.6\% de los videos \textit{disturbing} ni el 45.0\% de los \textit{restricted}. Aplicado a 839,905 videos sin etiquetar, el modelo genera muchas más alertas que el clasificador original, sobre todo en contenido popular no infantil. Los resultados indican que los metadatos permiten priorizar la revisión humana, pero no reemplazarla.
+\end{abstract}
+
+\begin{IEEEkeywords}
+clasificación de texto, moderación de contenido, seguridad infantil, YouTube, Elsagate, TF-IDF
+\end{IEEEkeywords}
 
 % =====================================================================
 % INTRODUCCIÓN Y FORMULACIÓN DEL PROBLEMA  --  PENDIENTE
@@ -890,8 +897,15 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 % -> YA INCORPORADO en \ref{sec:etica} con ejemplos de la Sección VI.
 
 % =====================================================================
-% CONCLUSIONES  --  PENDIENTE (responder PI1-PI3)
+% CONCLUSIONES
 % =====================================================================
+\section{Conclusiones}\label{sec:conclusiones}
+\begin{itemize}
+\item \textbf{PI1 (H1 se cumple):} los metadatos permiten distinguir las cuatro clases con un desempeño muy superior al baseline. El modelo final alcanza un F1 macro de 0.725 en prueba, sobre canales no vistos, frente a 0.145 del modelo de clase mayoritaria, y un AUC macro de 0.914. Sin embargo, la detección no es suficiente para un uso automático: el recall es de 0.714 en \textit{disturbing} y de 0.550 en \textit{restricted}, y los videos con títulos de apariencia infantil siguen siendo indetectables solo con el texto.
+\item \textbf{PI2 (H2 no se cumple):} en los videos nuevos de \texttt{elsagate\_related}, el modelo predice como inapropiados el 21.78\%, frente al 0.55\% del clasificador original, y la concordancia entre ambos no supera al azar (kappa $\approx 0$).
+\item \textbf{PI3 (H3 no se cumple):} en \texttt{other\_child\_related}, \texttt{random} y \texttt{popular}, la proporción de alertas (6.7\% a 12.0\%) es un orden de magnitud mayor que la del clasificador original, aunque se mantiene el orden de riesgo esperado (Elsagate primero, videos aleatorios al final).
+\end{itemize}
+Los principales aprendizajes son tres. Primero, el texto y las métricas de interacción son complementarios: el texto identifica el contenido infantil perturbador, y la interacción, el contenido restringido. Segundo, con muchos términos y pocos ejemplos, un modelo lineal sobre el TF-IDF completo supera a los modelos de árboles. Tercero, validar agrupando por canal y probar fuera del ground truth revela limitaciones que las métricas de prueba no muestran, en particular la sensibilidad al cambio de distribución. Por ello, el modelo es adecuado como herramienta para priorizar la revisión humana dentro de plataformas infantiles, no como filtro automático.
 
 % =====================================================================
 % TRABAJO FUTURO
