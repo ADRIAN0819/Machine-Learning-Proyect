@@ -45,6 +45,7 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `baselines.py`: Modelos baseline (Dummy, LogReg + TF-IDF, Naive Bayes); genera `reports/baselines.md`.
   * `models.py`: Modelos tabulares, combinado y ablation study (Random Forest, LightGBM, LogReg combinado); genera `reports/models.md`.
   * `tuning.py`: Ajuste de hiperparámetros con `RandomizedSearchCV` y evaluación final en test; genera `reports/tuning.md`, `reports/final_model.md`, `reports/test_predictions.csv` y `models/final.joblib`.
+  * `paired_comparison.py`: Comparación pareada fold a fold de la regresión logística y LightGBM ajustados (diferencias por fold y prueba t pareada); genera `reports/paired_comparison.md`.
   * `evaluation.py`: Curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera `reports/evaluation.md` y las figuras en `reports/figures/`. Si `models/final.joblib` no existe lo re-entrena automáticamente.
   * `interpretability.py`: SHAP values con `LinearExplainer`, importancia de features por clase e análisis cualitativo de falsos negativos/positivos; genera `reports/interpretability.md` y figuras SHAP en `reports/figures/`.
   * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3); genera `reports/additional_consistency.md` y `outputs/additional_predictions.csv.gz` (este último excluido de git).
@@ -254,6 +255,7 @@ pip install -r requirements.txt
    * `python -m modeling.baselines` — entrena y evalúa los modelos baseline (CV sobre train).
    * `python -m modeling.models` — entrena los modelos tabulares, combinado y ablation study (CV sobre train).
    * `python -m modeling.tuning` — ajuste de hiperparámetros y evaluación final en test; guarda `modeling/models/final.joblib`.
+   * `python -m modeling.paired_comparison` — compara fold a fold los dos modelos ajustados (~1 min).
    * `python -m modeling.evaluation` — curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera figuras en `modeling/reports/figures/`. Si `final.joblib` no existe, lo re-entrena automáticamente.
    * `python -m modeling.interpretability` — SHAP values, importancia de features y análisis cualitativo de errores; genera figuras SHAP en `modeling/reports/figures/`.
    * `python -m modeling.additional_inference --model modeling/models/final.joblib` — evalúa la consistencia en los conjuntos adicionales (~4 min para 839,905 videos; usar `--demo --limit-per-part 5000` para una prueba rápida).
@@ -269,6 +271,7 @@ python -m modeling.leakage_check     # validacion aleatoria vs. agrupada
 python -m modeling.baselines         # Dummy, LogReg y Naive Bayes
 python -m modeling.models            # RF, LightGBM, combinados y ablation
 python -m modeling.tuning            # ajuste de hiperparametros + models/final.joblib
+python -m modeling.paired_comparison # RL vs. LightGBM fold a fold
 python -m modeling.evaluation        # metricas de test, ROC/PR y matriz de confusion
 python -m modeling.interpretability  # SHAP y analisis de errores
 python -m modeling.additional_inference --model modeling/models/final.joblib  # PI2 y PI3
