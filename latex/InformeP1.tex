@@ -771,7 +771,7 @@ La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas P
 \end{figure}
 
 \subsection{Importancia de características (SHAP)}\label{sec:shap}
-Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: las features de texto (TF-IDF de título y tags) dominan, lo que es consistente con el ablation study, donde el texto solo alcanza F1=0.625 frente a 0.580 de los metadatos solos.
+Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 64.2\% de la importancia en \textit{disturbing} y el 53.1\% en \textit{suitable}, mientras que en \textit{restricted} (38.6\%) e \textit{irrelevant} (40.0\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
 
 \begin{figure}[!t]
 \centering
@@ -780,7 +780,7 @@ Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión 
 \label{fig:shap}
 \end{figure}
 
-Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importancia para \textit{disturbing} y \textit{restricted}. Para \textit{disturbing}, los términos del título (``peppa'', ``elsa'') y los metadatos de engagement (\texttt{like\_count\_log1p}, \texttt{duration\_seconds}) son las señales más fuertes. Para \textit{restricted}, los conteos de interacción dominan sobre el texto, ya que el vocabulario explícito es poco frecuente en el dataset.
+Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importancia para \textit{disturbing} y \textit{restricted}. Para \textit{disturbing}, junto a los likes, la duración y la categoría aparecen términos del título asociados a personajes infantiles (\textit{peppa}, \textit{pig}, \textit{elsa}), coherentes con la Tabla~\ref{tab:terms}. Para \textit{restricted}, los conteos de interacción dominan sobre el texto, ya que el vocabulario explícito es poco frecuente en el dataset.
 
 \begin{table}[!t]
 \caption{Top 5 features SHAP para las clases críticas}
@@ -857,7 +857,14 @@ En conjunto, el modelo se desplaza hacia más alertas cuando cambia la distribuc
 % =====================================================================
 \section{Discusión y Limitaciones}\label{sec:discusion}
 
-% VII.A Interpretación de resultados  --  PENDIENTE (requiere resultados de las Secciones VI)
+\subsection{Interpretación de resultados}\label{sec:interp}
+\textbf{Por qué ganó la regresión logística combinada.} Con 3,842 videos de entrenamiento y más de 38 mil columnas de texto, el problema está en el régimen de alta dimensión y pocos ejemplos, donde los modelos lineales regularizados suelen funcionar mejor que los árboles. LightGBM necesita reducir el texto con SVD, y esa reducción conserva las direcciones de mayor varianza (el vocabulario frecuente), pero pierde términos raros y muy discriminativos. El efecto se ve en \textit{restricted}, cuyo vocabulario (\textit{sexy}, \textit{hypnosis}, Tabla~\ref{tab:terms}) es escaso: con solo texto, el recall de esta clase es 0.157 con LightGBM y SVD frente a 0.359 con regresión logística sobre el TF-IDF completo (Tabla~\ref{tab:modelos}). Al combinar texto y metadatos, la diferencia persiste (0.331 frente a 0.566).
+
+\textbf{Las dos fuentes de información son complementarias.} El ablation study y el análisis SHAP coinciden: el texto separa sobre todo el contenido infantil (\textit{suitable} y \textit{disturbing} comparten personajes, pero no el mismo vocabulario), mientras que las métricas de interacción separan \textit{restricted} e \textit{irrelevant}, que están en los extremos de la mediana de vistas (1,348,394 y 10,436, respectivamente; Tabla~\ref{tab:clase}). Agregar los metadatos a la regresión logística sube el F1 macro de 0.672 a 0.710 y el recall de \textit{restricted} de 0.359 a 0.566.
+
+\textbf{Los hiperparámetros importan menos que la representación.} El ajuste apenas cambió el F1 macro de la regresión logística (0.710 en ambos casos) y la mejor configuración de LightGBM fue la más regularizada. El límite del desempeño está en la información disponible y no en el ajuste fino. El F1 macro en prueba (0.725) es similar al de validación cruzada (0.710), lo que indica que la selección del modelo no sobreajustó las particiones.
+
+\textbf{Generalización fuera del ground truth.} La Sección~\ref{sec:consistencia} muestra la otra cara del resultado: el mismo peso de las métricas de interacción que ayuda a detectar \textit{restricted} en el ground truth produce muchas alertas en videos populares no infantiles. El modelo es fiable dentro de la distribución con la que se entrenó, pero no es directamente transferible a una plataforma abierta.
 
 \subsection{Limitaciones}\label{sec:limit2}
 Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1}), el diseño del proyecto tiene las siguientes:

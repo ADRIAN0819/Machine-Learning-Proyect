@@ -58,15 +58,15 @@ Ver figura: `reports/figures/shap_bar_restricted.png`
 
 ### Interpretación
 
-- Las features de **texto** (TF-IDF de título y tags) dominan la importancia
-  global, lo que es consistente con el ablation study: el texto solo da F1=0.625
-  vs. F1=0.682 con texto+metadatos.
-- Para `disturbing`, los términos de tags relacionados con personajes de
-  dibujos animados en contextos violentos/sexuales tienen los SHAP más altos.
-- Para `restricted`, los términos sexuales y de hipnosis en título/tags son
-  determinantes, pero su baja frecuencia limita el recall (F1=0.524).
-- Los metadatos de engagement (`likes_per_view`, `view_count_log1p`) tienen
-  importancia SHAP moderada, pero ayudan especialmente en `irrelevant` vs `suitable`.
+- De forma individual, las features más influyentes son los conteos de
+  interacción (likes, vistas, dislikes, comentarios), la categoría y
+  `licensed_content`; los primeros términos de texto (peppa, pig, elsa) aparecen
+  más abajo en el ranking.
+- La importancia del texto se reparte entre ~38 mil columnas TF-IDF. Sumada por
+  bloque, el texto aporta el 64 % de la importancia en `disturbing` y el 53 % en
+  `suitable`; en `restricted` e `irrelevant` pesan más los metadatos (~60 %).
+- Es consistente con el ablation study: texto solo F1=0.625, metadatos solos
+  F1=0.580, texto+metadatos F1=0.682 (LightGBM).
 
 ## Análisis cualitativo de errores
 
