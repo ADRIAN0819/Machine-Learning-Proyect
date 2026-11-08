@@ -72,7 +72,7 @@ clasificación de texto, moderación de contenido, seguridad infantil, YouTube, 
 \end{IEEEkeywords}
 
 % =====================================================================
-% INTRODUCCIÓN Y FORMULACIÓN DEL PROBLEMA  --  PENDIENTE
+% INTRODUCCIÓN Y FORMULACIÓN DEL PROBLEMA
 % =====================================================================
 \section{Introducción y Formulación del Problema}
 
@@ -585,7 +585,7 @@ No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth
 % METODOLOGÍA Y MODELOS  [LEO]
 % =====================================================================
 \section{Metodología y Modelos}\label{sec:metodologia}
-Todos los modelos se implementaron con scikit-learn y LightGBM como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
+Todos los modelos se implementaron con scikit-learn~\cite{sklearn} y LightGBM~\cite{lightgbm} como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
 
 \subsection{Modelos baseline}\label{sec:baseline}
 \begin{itemize}
@@ -778,7 +778,7 @@ La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas P
 \end{figure}
 
 \subsection{Importancia de características (SHAP)}\label{sec:shap}
-Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 64.2\% de la importancia en \textit{disturbing} y el 53.1\% en \textit{suitable}, mientras que en \textit{restricted} (38.6\%) e \textit{irrelevant} (40.0\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
+Se calcularon valores SHAP~\cite{shap} con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 64.2\% de la importancia en \textit{disturbing} y el 53.1\% en \textit{suitable}, mientras que en \textit{restricted} (38.6\%) e \textit{irrelevant} (40.0\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
 
 \begin{figure}[!t]
 \centering
@@ -851,7 +851,7 @@ Popular & 9,607 & 12.00\% & 0.00\% & 88.00\% & 0.000 \\
 \end{center}
 \end{table}
 
-\textbf{PI2 (\texttt{elsagate\_related}):} el modelo predice como inapropiados el 21.78\% de los videos (8.59\% \textit{disturbing} y 13.19\% \textit{restricted}), unas 40 veces más que el clasificador original (0.55\%). Por tanto, \textbf{H2 no se cumple}. El acuerdo de 77.87\% se debe casi por completo a los videos que ambos consideran apropiados: el kappa de Cohen es prácticamente 0, y de los 1,260 videos que marcó el clasificador original, el modelo coincide solo en 227 (18.0\%).
+\textbf{PI2 (\texttt{elsagate\_related}):} el modelo predice como inapropiados el 21.78\% de los videos (8.59\% \textit{disturbing} y 13.19\% \textit{restricted}), unas 40 veces más que el clasificador original (0.55\%). Por tanto, \textbf{H2 no se cumple}. El acuerdo de 77.87\% se debe casi por completo a los videos que ambos consideran apropiados: el kappa de Cohen~\cite{cohen} es prácticamente 0, y de los 1,260 videos que marcó el clasificador original, el modelo coincide solo en 227 (18.0\%).
 
 \textbf{PI3 (\texttt{other\_child\_related}, \texttt{random}, \texttt{popular}):} las proporciones del modelo (11.92\%, 6.74\% y 12.00\%) son también un orden de magnitud mayores que las del clasificador original, por lo que \textbf{H3 tampoco se cumple}. Sí se conserva el orden de riesgo esperado: la proporción es máxima en \texttt{elsagate\_related}, y la clase \textit{disturbing} (la más ligada al fenómeno Elsagate) cae de 8.59\% en ese conjunto a 1.20\% en \texttt{random}.
 
@@ -892,9 +892,6 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 \item \textbf{Transparencia:} un sistema de apoyo a la moderación debe poder explicar sus decisiones. Por ello se priorizan representaciones interpretables (términos de TF-IDF, longitud del título, métricas de interacción) y se analiza la importancia de las características, de modo que un moderador pueda ver qué señales motivaron cada alerta.
 \item \textbf{Uso de los datos:} el dataset contiene solo metadatos públicos de los videos, sin información personal de los espectadores ni de menores. Se usa con fines académicos y citando a sus autores~\cite{papadamou,papadamou_data}, cuyo acceso en Zenodo es restringido.
 \end{itemize}
-% Pendiente para la versión final: ilustrar el costo asimétrico con 2-3 falsos
-% negativos reales en disturbing del análisis de errores de Mafer (Sección VI).
-% -> YA INCORPORADO en \ref{sec:etica} con ejemplos de la Sección VI.
 
 % =====================================================================
 % CONCLUSIONES
