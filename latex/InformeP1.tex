@@ -601,7 +601,7 @@ La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas P
 \end{figure}
 
 \subsection{Importancia de características (SHAP)}\label{sec:shap}
-Se calcularon valores SHAP~\cite{shap} con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 64.2\% de la importancia en \textit{disturbing} y el 53.1\% en \textit{suitable}, mientras que en \textit{restricted} (38.6\%) e \textit{irrelevant} (40.0\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
+Se calcularon valores SHAP~\cite{shap} con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba, con la media de entrenamiento como referencia. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 65.1\% de la importancia en \textit{disturbing} y el 55.1\% en \textit{suitable}, mientras que en \textit{restricted} (40.5\%) e \textit{irrelevant} (41.7\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
 
 \begin{figure}[!t]
 \centering
@@ -621,17 +621,17 @@ Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importanci
 \textbf{Clase} & \textbf{Feature} & \textbf{$|\overline{\text{SHAP}}|$} \\
 \hline
 \multirow{5}{*}{Disturbing}
- & like\_count\_log1p & 0.275 \\
- & category\_id (1) & 0.224 \\
- & duration\_seconds & 0.222 \\
- & licensed\_content & 0.150 \\
- & title\_chars & 0.148 \\
+ & like\_count\_log1p & 0.272 \\
+ & duration\_seconds & 0.247 \\
+ & category\_id (1) & 0.219 \\
+ & licensed\_content & 0.151 \\
+ & title\_chars & 0.149 \\
 \hline
 \multirow{5}{*}{Restricted}
- & like\_count\_log1p & 1.211 \\
- & dislike\_count\_log1p & 0.811 \\
- & view\_count\_log1p & 0.600 \\
- & comment\_count\_log1p & 0.288 \\
+ & like\_count\_log1p & 1.194 \\
+ & dislike\_count\_log1p & 0.809 \\
+ & view\_count\_log1p & 0.589 \\
+ & comment\_count\_log1p & 0.284 \\
  & licensed\_content & 0.178 \\
 \hline
 \end{tabular}

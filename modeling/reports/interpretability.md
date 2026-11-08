@@ -4,7 +4,8 @@ Modelo: **LogReg combinado (TF-IDF + metadatos)**, `C=1.16`.
 
 ## Importancia de variables (SHAP)
 
-Se usa `shap.LinearExplainer` (exacto para regresión logística).
+Se usa `shap.LinearExplainer` (exacto para regresión logística), con train
+como fondo de referencia y los 955 videos de test como muestras explicadas.
 Los valores SHAP miden la contribución marginal de cada feature a
 la predicción de cada clase (one-vs-rest).
 
@@ -18,21 +19,21 @@ Ver figura: `reports/figures/shap_bar_disturbing.png`
 
 | Feature | Importancia media |SHAP| |
 |---|---:|
-| like count log1p | 0.27518 |
-| category id 1 | 0.22382 |
-| duration seconds | 0.22184 |
-| licensed content True | 0.14959 |
-| title chars | 0.14828 |
-| licensed content False | 0.10969 |
-| title: peppa | 0.07956 |
-| view count log1p | 0.07872 |
-| comment count log1p | 0.06165 |
-| title: pig | 0.05571 |
-| category id 20 | 0.05341 |
-| category id 22 | 0.05313 |
-| title: elsa | 0.05300 |
-| likes per view | 0.05169 |
-| title: peppa pig | 0.04730 |
+| like count log1p | 0.27179 |
+| duration seconds | 0.24738 |
+| category id 1 | 0.21920 |
+| licensed content True | 0.15078 |
+| title chars | 0.14877 |
+| licensed content False | 0.10849 |
+| view count log1p | 0.07916 |
+| title: peppa | 0.06893 |
+| category id 20 | 0.06637 |
+| comment count log1p | 0.05991 |
+| title: elsa | 0.05455 |
+| likes per view | 0.05298 |
+| category id 22 | 0.05289 |
+| title: pig | 0.05033 |
+| category id 27 | 0.04431 |
 
 ### Top features para `restricted`
 
@@ -40,21 +41,21 @@ Ver figura: `reports/figures/shap_bar_restricted.png`
 
 | Feature | Importancia media |SHAP| |
 |---|---:|
-| like count log1p | 1.21098 |
-| dislike count log1p | 0.81065 |
-| view count log1p | 0.60033 |
-| comment count log1p | 0.28788 |
-| licensed content True | 0.17754 |
-| title chars | 0.16241 |
-| licensed content False | 0.13870 |
-| category id 1 | 0.13100 |
-| title words | 0.11898 |
-| category id 20 | 0.10667 |
-| comments per view | 0.08835 |
-| category id 24 | 0.08315 |
-| category id 22 | 0.06837 |
-| likes per view | 0.06230 |
-| duration seconds | 0.04823 |
+| like count log1p | 1.19389 |
+| dislike count log1p | 0.80894 |
+| view count log1p | 0.58931 |
+| comment count log1p | 0.28370 |
+| licensed content True | 0.17741 |
+| title chars | 0.16411 |
+| licensed content False | 0.13664 |
+| category id 20 | 0.13059 |
+| category id 1 | 0.12731 |
+| title words | 0.11897 |
+| comments per view | 0.09460 |
+| category id 24 | 0.08120 |
+| category id 22 | 0.06805 |
+| likes per view | 0.06447 |
+| duration seconds | 0.05373 |
 
 ### Interpretación
 
@@ -63,7 +64,7 @@ Ver figura: `reports/figures/shap_bar_restricted.png`
   `licensed_content`; los primeros términos de texto (peppa, pig, elsa) aparecen
   más abajo en el ranking.
 - La importancia del texto se reparte entre ~38 mil columnas TF-IDF. Sumada por
-  bloque, el texto aporta el 64 % de la importancia en `disturbing` y el 53 % en
+  bloque, el texto aporta el 65 % de la importancia en `disturbing` y el 55 % en
   `suitable`; en `restricted` e `irrelevant` pesan más los metadatos (~60 %).
 - Es consistente con el ablation study: texto solo F1=0.625, metadatos solos
   F1=0.580, texto+metadatos F1=0.682 (LightGBM).
