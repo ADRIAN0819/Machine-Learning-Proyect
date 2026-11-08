@@ -101,7 +101,7 @@ def compute_shap_values(model, X_sample: pd.DataFrame):
     import scipy.sparse as sp
     is_sparse = sp.issparse(X_transformed)
     perturbation = "interventional" if is_sparse else "correlation_dependent"
-    print(f"  Datos {'dispersos' if is_sparse else 'densos'} → perturbation='{perturbation}'")
+    print(f"  Datos {'dispersos' if is_sparse else 'densos'} -> perturbation='{perturbation}'")
     print("  Inicializando LinearExplainer...")
     explainer = shap.LinearExplainer(
         classifier,

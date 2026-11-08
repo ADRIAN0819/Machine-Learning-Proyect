@@ -38,7 +38,7 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `preprocesamiento_features_v1.ipynb`: Notebook para auditar, transformar e imputar el ground truth.
   * `preprocessing.py`: Función reutilizable de ingeniería de características y exportación.
   * `dataset_features_v1.csv`: 16 features procesadas (incluye longitud del título), etiqueta y metadatos (`video_id`, `channel_id`, `split`) para la partición agrupada por canal.
-* `modeling/`: Partición, validación y comprobación de consistencia (Etapa 2).
+* `modeling/`: Partición, modelos, ajuste, evaluación, interpretabilidad y comprobación de consistencia (Etapa 2).
   * `splits.py`: Folds de validación cruzada (5, estratificados y agrupados por canal) dentro de train; genera `folds_v1.csv` y `reports/folds_report.md`. Expone `load_train_test()` y `predefined_cv()` para que todos los modelos usen la misma partición.
   * `features.py`: Representación de texto (TF-IDF de título, descripción y tags) y de metadatos como `ColumnTransformer`; `build_preprocessor("text" | "metadata" | "combined", svd_components=None)` para el ablation study (`reports/text_features.md`).
   * `leakage_check.py`: Compara validación aleatoria vs. agrupada por canal con un modelo TF-IDF + regresión logística (`reports/leakage_check.md`).
@@ -47,7 +47,8 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `tuning.py`: Ajuste de hiperparámetros con `RandomizedSearchCV` y evaluación final en test; genera `reports/tuning.md`, `reports/final_model.md`, `reports/test_predictions.csv` y `models/final.joblib`.
   * `evaluation.py`: Curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera `reports/evaluation.md` y las figuras en `reports/figures/`. Si `models/final.joblib` no existe lo re-entrena automáticamente.
   * `interpretability.py`: SHAP values con `LinearExplainer`, importancia de features por clase e análisis cualitativo de falsos negativos/positivos; genera `reports/interpretability.md` y figuras SHAP en `reports/figures/`.
-  * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3).
+  * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3); genera `reports/additional_consistency.md` y `outputs/additional_predictions.csv.gz` (este último excluido de git).
+* `latex/`: Informe en formato IEEE (`InformeP1.tex`, `references.bib`, `images/`).
   * `reports/`: Reportes Markdown generados automáticamente por los scripts anteriores.
   * `reports/figures/`: Figuras PNG (ROC, PR, matriz de confusión, SHAP) listas para el paper IEEE.
   * `models/`: Modelo final serializado (`final.joblib`, ~2.5 MB). Excluido de git por `.gitignore`; regenerar con `python -m modeling.tuning` o `python -m modeling.evaluation`.
@@ -115,9 +116,9 @@ No es necesario descargar nada: al clonar el repositorio, los scripts y notebook
 | Evaluación y métricas | Mafer | ✅ Completo | `modeling/evaluation.py`, `reports/evaluation.md`, figuras ROC/PR/CM |
 | Interpretabilidad y errores | Mafer | ✅ Completo | `modeling/interpretability.py`, `reports/interpretability.md`, figuras SHAP |
 | Pruebas en datasets adicionales | Adrián | ✅ Completo | `modeling/additional_inference.py`, `reports/additional_consistency.md` |
-| Discusión, ética y limitaciones | Adrián | ⏳ Pendiente | Secciones 7 y 8 del paper |
-| Redacción e integración del paper | Mariela (coord.) | ⏳ Pendiente | Borrador IEEE completo |
-| Repositorio y reproducibilidad | Leo | ⏳ Pendiente | README final, requirements actualizados |
+| Discusión, ética y limitaciones | Adrián | ✅ Completo | Secciones VII y VIII del paper (`latex/InformeP1.tex`) |
+| Redacción e integración del paper | Mariela (coord.) | ✅ Borrador completo | `latex/InformeP1.tex`: 10 secciones, 12 páginas IEEE (pendiente revisión final del equipo) |
+| Repositorio y reproducibilidad | Leo | ✅ Completo | README, `requirements.txt`, secuencia de reproducción |
 | Presentación P2 | Todo el equipo | ⏳ Pendiente | Slides + guión ensayado |
 
 ---
@@ -167,6 +168,31 @@ Matriz de confusión (filas = real, columnas = predicción):
 | suitable | 14 | 40 | 11 | 255 |
 
 > Los reportes completos y las figuras (curvas ROC/PR, matrices de confusión, SHAP) se encuentran en `modeling/reports/` y `modeling/reports/figures/`.
+
+### Consistencia en conjuntos adicionales (PI2 y PI3)
+
+El modelo final se aplicó a 839,905 videos que **no** están en el ground truth y se comparó con la predicción binaria del clasificador original (*inapropiado* = `disturbing` o `restricted`). No hay etiquetas humanas: mide consistencia, no eficacia.
+
+| Conjunto | Videos | % inapropiado (modelo) | % inapropiado (original) | Kappa |
+|---|---:|---:|---:|---:|
+| elsagate_related | 230,873 | 21.78 | 0.55 | −0.002 |
+| other_child_related | 137,043 | 11.92 | 0.43 | −0.007 |
+| random | 462,382 | 6.74 | 0.73 | 0.000 |
+| popular | 9,607 | 12.00 | 0.00 | 0.000 |
+
+El modelo conserva el orden de riesgo esperado (Elsagate > aleatorios), pero genera muchas más alertas que el clasificador original, sobre todo en `restricted` sobre contenido popular no infantil (H2 y H3 no se cumplen). Detalle en `modeling/reports/additional_consistency.md` y en la Sección VI.D del informe.
+
+---
+
+## Informe (paper IEEE)
+
+* `latex/InformeP1.tex`: informe completo de la Etapa 2 (12 páginas, plantilla IEEE de conferencias), con `latex/references.bib` y las figuras en `latex/images/`.
+* Compilar desde `latex/` (o subir la carpeta a Overleaf):
+  ```bash
+  cd latex
+  pdflatex InformeP1.tex && bibtex InformeP1 && pdflatex InformeP1.tex && pdflatex InformeP1.tex
+  ```
+* Las figuras y tablas del EDA que no entraron en el límite de 12 páginas siguen en `exploratory_data_analysis/images/` y `exploratory_data_analysis/EDA.md`.
 
 ---
 
@@ -230,8 +256,27 @@ pip install -r requirements.txt
    * `python -m modeling.tuning` — ajuste de hiperparámetros y evaluación final en test; guarda `modeling/models/final.joblib`.
    * `python -m modeling.evaluation` — curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera figuras en `modeling/reports/figures/`. Si `final.joblib` no existe, lo re-entrena automáticamente.
    * `python -m modeling.interpretability` — SHAP values, importancia de features y análisis cualitativo de errores; genera figuras SHAP en `modeling/reports/figures/`.
-   * `python -m modeling.additional_inference --model modeling/models/final.joblib` — evalúa la consistencia en los conjuntos adicionales (usar `--demo --limit-per-part 5000` para una prueba rápida).
+   * `python -m modeling.additional_inference --model modeling/models/final.joblib` — evalúa la consistencia en los conjuntos adicionales (~4 min para 839,905 videos; usar `--demo --limit-per-part 5000` para una prueba rápida).
    * Ejecutar todos los comandos desde la raíz del repositorio.
+
+### Reproducir todos los resultados de la Etapa 2
+
+Con el entorno activado y desde la raíz del repositorio:
+
+```bash
+python -m modeling.splits            # particion agrupada por canal (folds_v1.csv)
+python -m modeling.leakage_check     # validacion aleatoria vs. agrupada
+python -m modeling.baselines         # Dummy, LogReg y Naive Bayes
+python -m modeling.models            # RF, LightGBM, combinados y ablation
+python -m modeling.tuning            # ajuste de hiperparametros + models/final.joblib
+python -m modeling.evaluation        # metricas de test, ROC/PR y matriz de confusion
+python -m modeling.interpretability  # SHAP y analisis de errores
+python -m modeling.additional_inference --model modeling/models/final.joblib  # PI2 y PI3
+```
+
+Cada script escribe su reporte en `modeling/reports/`. Con scikit-learn 1.7.2 se reproducen las métricas del informe (F1 macro en test 0.725); en otro hardware pueden variar en el tercer decimal métricas como el AP.
+
+> **Windows:** usar el Python oficial de python.org (por ejemplo `py -3.13 -m venv venv`), no el de MSYS2/Git Bash, que no tiene ruedas precompiladas de scikit-learn.
 
 ### 4. Uso de la partición en los modelos
 
