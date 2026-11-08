@@ -61,11 +61,18 @@ adrian.urbina@utec.edu.pe}
 \maketitle
 
 % =====================================================================
-% RESUMEN  --  PENDIENTE
+% RESUMEN
 % =====================================================================
+\begin{abstract}
+Muchos videos de YouTube con apariencia infantil contienen escenas violentas, sexuales o perturbadoras (fenómeno Elsagate), y la revisión humana no alcanza para el volumen de la plataforma. Este trabajo estudia si es posible clasificar videos dirigidos a niños como \textit{suitable}, \textit{disturbing}, \textit{restricted} o \textit{irrelevant} usando solo sus metadatos: título, descripción, tags, duración y métricas de interacción. Se usa el ground truth de 4,797 videos etiquetados por humanos de Papadamou \textit{et al.}, con una partición y una validación cruzada agrupadas por canal para evitar que el modelo reconozca canales ya vistos. Se compararon un baseline de clase mayoritaria, regresión logística y Naive Bayes sobre TF-IDF, Random Forest y LightGBM sobre metadatos, y modelos combinados de texto y metadatos. El mejor modelo, una regresión logística sobre TF-IDF y metadatos, alcanzó en prueba un F1 macro de 0.725 (frente a 0.138 del baseline de clase mayoritaria en el mismo conjunto) y un AUC macro de 0.914, aunque no detectó el 28.6\% de los videos \textit{disturbing} ni el 45.0\% de los \textit{restricted}. Aplicado a 839,905 videos sin etiquetar, el modelo genera muchas más alertas que el clasificador original, sobre todo en contenido popular no infantil. Los resultados indican que los metadatos permiten priorizar la revisión humana, pero no reemplazarla.
+\end{abstract}
+
+\begin{IEEEkeywords}
+clasificación de texto, moderación de contenido, seguridad infantil, YouTube, Elsagate, TF-IDF
+\end{IEEEkeywords}
 
 % =====================================================================
-% INTRODUCCIÓN Y FORMULACIÓN DEL PROBLEMA  --  PENDIENTE
+% INTRODUCCIÓN Y FORMULACIÓN DEL PROBLEMA
 % =====================================================================
 \section{Introducción y Formulación del Problema}
 
@@ -77,14 +84,7 @@ Debido al enorme flujo de contenido, con miles de millones de videos subidos y c
 
 El proyecto dispone de un conjunto de datos de referencia con 4,797 videos etiquetados manualmente en cuatro clases: \textit{suitable}, \textit{disturbing}, \textit{restricted} e \textit{irrelevant}~\cite{papadamou}, cuyas definiciones se detallan en la Sección~\ref{sec:target}. Además, se cuenta con un corpus más amplio para extender el análisis a gran escala. El análisis exploratorio de los datos revela patrones en títulos, etiquetas, duración, categorías de YouTube y métricas de interacción que diferencian parcialmente estas clases. El principal desafío del proyecto es distinguir contenido infantil legítimo de aquellos videos engañosos que, bajo apariencia de material infantil (personajes conocidos, colores, juguetes), ocultan elementos inadecuados~\cite{uscm}. Esta tarea es compleja porque los creadores malintencionados pueden modificar ligeramente el contenido y las plataformas públicas evolucionan continuamente.
 
-La motivación del proyecto combina varios factores clave:
-\begin{itemize}
-\item Alto volumen de contenido infantil en YouTube, lo que hace prácticamente imposible su supervisión manual total.
-\item Dificultad para filtrar videos engañosos que parecen inocuos pero contienen material perturbador.
-\item Necesidad de herramientas automáticas que asistan la identificación y clasificación de videos para niños.
-\item Importancia social de proteger a los niños de contenidos inapropiados y facilitar el trabajo de padres, tutores y plataformas.
-\end{itemize}
-El objetivo es crear una herramienta de apoyo que agilice la detección de videos sospechosos, analice volúmenes masivos de información y contribuya a una clasificación más eficiente. No se busca reemplazar la supervisión humana, sino ayudarla haciendo más rápida y precisa la preclasificación de contenido potencialmente problemático.
+La motivación combina el alto volumen de contenido infantil, que hace inviable la supervisión manual total; la dificultad de filtrar videos engañosos que parecen inocuos; y la importancia social de proteger a los niños y facilitar el trabajo de padres, tutores y plataformas. El objetivo es crear una herramienta de apoyo que agilice la detección de videos sospechosos, analice volúmenes masivos de información y contribuya a una clasificación más eficiente. No se busca reemplazar la supervisión humana, sino ayudarla haciendo más rápida y precisa la preclasificación de contenido potencialmente problemático.
 
 \subsection{Objetivos del proyecto}\label{sec:obj}
 % [EQUIPO]
@@ -110,17 +110,17 @@ Se plantea un modelo de aprendizaje supervisado que, a partir de los metadatos y
 \end{itemize}
 El identificador y el nombre del canal no se incluyen como características, para evitar que el modelo memorice rasgos propios de cada canal (Sección~\ref{sec:leak}); el canal se usa únicamente para agrupar la partición de los datos.
 
-A partir de estas características, el modelo aprenderá una función de predicción. Formalmente, la tarea se expresa como
+A partir de estas características, el modelo aprende una función de predicción. Formalmente, la tarea se expresa como
 \begin{equation}
 \hat{y}_v = f(\mathbf{x}_v),\label{eq:f}
 \end{equation}
-donde $\hat{y}_v\in\mathcal{Y}$ es la clase predicha para el video $v$, con $\mathcal{Y}$ el conjunto de las cuatro clases (\textit{suitable}, \textit{disturbing}, \textit{restricted} e \textit{irrelevant}), y $f\colon\mathbb{R}^{n}\to\mathcal{Y}$ opera sobre las características ya vectorizadas. El modelo buscará que $\hat{y}_v$ coincida con la etiqueta real $y_v$ del conjunto de entrenamiento. Inicialmente se aborda como un problema de clasificación multiclase supervisada, dado que se cuenta con etiquetas manuales.
+donde $\hat{y}_v\in\mathcal{Y}$ es la clase predicha para el video $v$, con $\mathcal{Y}$ el conjunto de las cuatro clases (\textit{suitable}, \textit{disturbing}, \textit{restricted} e \textit{irrelevant}), y $f\colon\mathbb{R}^{n}\to\mathcal{Y}$ opera sobre las características ya vectorizadas. El modelo busca que $\hat{y}_v$ coincida con la etiqueta real $y_v$ del conjunto de entrenamiento. Se aborda como un problema de clasificación multiclase supervisada, dado que se cuenta con etiquetas manuales.
 
-Para entrenar el modelo se emplean los 4,797 videos etiquetados. La función $f$ puede implementarse con distintos algoritmos de clasificación (por ejemplo, regresión logística multiclase, árboles de decisión, ensamblajes o redes neuronales). El modelo entrenado se evaluará en un conjunto de prueba independiente, reservado del ground truth. Se prestará especial atención al desempeño en las clases \textit{disturbing} y \textit{restricted}, ya que clasificar erróneamente estos videos como seguros tendría consecuencias más graves.
+Para entrenar el modelo se emplean los 4,797 videos etiquetados. La función $f$ puede implementarse con distintos algoritmos de clasificación (por ejemplo, regresión logística multiclase, árboles de decisión, ensamblajes o redes neuronales). El modelo entrenado se evalúa una sola vez en un conjunto de prueba independiente, reservado del ground truth (Sección~\ref{sec:validacion}). Se presta especial atención al desempeño en las clases \textit{disturbing} y \textit{restricted}, ya que clasificar erróneamente estos videos como seguros tendría consecuencias más graves.
 
-Como alternativa a la clasificación multiclase, también se explorará la idea de predecir un puntaje continuo de nivel de inapropiación (por ejemplo, entre 0 y 1). En este caso, la función $f$ sería de regresión y podría formularse como $y_v \in [0,1]$ en lugar de asignar categorías discretas. Sin embargo, inicialmente se implementará la tarea como clasificación para ajustarse a las etiquetas disponibles.
+Se consideró también predecir un puntaje continuo de inapropiación ($y_v \in [0,1]$) como tarea de regresión, pero se descartó porque las etiquetas disponibles son categóricas; en su lugar, las probabilidades por clase del modelo permiten ordenar los videos por riesgo para priorizar la revisión humana.
 
-Los pasos generales del pipeline serán:
+Los pasos generales del pipeline son:
 \begin{enumerate}
 \item Extracción automática de características $\mathbf{x}_v$ de cada video (a partir de metadatos y texto).
 \item Preprocesamiento y normalización de datos.
@@ -128,15 +128,9 @@ Los pasos generales del pipeline serán:
 \item Evaluación con validación cruzada y en el conjunto de prueba separado.
 \item Análisis de resultados (matriz de confusión, métricas) y ajuste de parámetros según corresponda.
 \end{enumerate}
-Adicionalmente, aunque la tarea principal se centra en metadatos, se podría considerar como extensión la incorporación de características audiovisuales extraídas directamente del contenido (por ejemplo, tasa de cambios de escena, movimiento, estadísticas de audio). Esto podría enriquecer el análisis, pero representa un esfuerzo adicional significativo, por lo que por ahora se priorizan las fuentes de información más accesibles: texto, etiquetas y métricas del video.
+Adicionalmente, aunque la tarea principal se centra en metadatos, la incorporación de características audiovisuales extraídas directamente del contenido (por ejemplo, tasa de cambios de escena, movimiento, estadísticas de audio) queda como extensión (Sección~\ref{sec:next}), porque representa un esfuerzo adicional significativo; en este trabajo se priorizan las fuentes de información más accesibles: texto, etiquetas y métricas del video.
 
-Las métricas elegidas para evaluar el desempeño son:
-\begin{itemize}
-\item \textbf{Exactitud (accuracy):} proporción de videos correctamente clasificados.
-\item \textbf{Precisión y exhaustividad (recall) por clase:} en particular en \textit{disturbing} y \textit{restricted}, que miden la capacidad de identificar correctamente videos problemáticos.
-\item \textbf{Puntuación F1:} media armónica entre precisión y recall, para balancear ambos indicadores.
-\item \textbf{Matriz de confusión:} para visualizar patrones de error entre clases.
-\end{itemize}
+Por el desbalance de clases, la métrica principal es el F1 macro, acompañada del recall por clase (en particular en \textit{disturbing} y \textit{restricted}), AUC-ROC, \textit{average precision} y la matriz de confusión; la exactitud se reporta solo como referencia (Sección~\ref{sec:metricas}).
 
 \subsection{Preguntas de investigación e hipótesis}
 % [LEO] (PI2 y PI3 reformuladas: fuera del ground truth no hay etiquetas humanas)
@@ -149,7 +143,7 @@ Se plantean las siguientes preguntas de investigación, cada una con su hipótes
 \item \textbf{PI3 (comprobación de consistencia):} Excluidos los solapamientos con el ground truth, ¿mantiene el modelo una proporción baja de videos predichos como inapropiados en \texttt{other\_child\_related}, \texttt{random\_videos} y \texttt{popular\_videos}, donde el clasificador original predijo como inapropiados el 0.43\%, el 0.73\% y el 0\% de los videos, respectivamente?\\
 \textbf{H3:} Se espera una proporción baja y del mismo orden que la del clasificador original, aunque podría aumentar levemente por el cambio de distribución entre conjuntos.
 \end{itemize}
-Como fuera del ground truth no existen etiquetas humanas, PI2 y PI3 se responden como comprobaciones de consistencia y no como medidas de recall o de tasa de falsos positivos (Sección~\ref{sec:next}).
+Como fuera del ground truth no existen etiquetas humanas, PI2 y PI3 se responden como comprobaciones de consistencia y no como medidas de recall o de tasa de falsos positivos (Sección~\ref{sec:consistencia}).
 
 % =====================================================================
 % DATOS Y EDA
@@ -161,71 +155,14 @@ Como fuera del ground truth no existen etiquetas humanas, PI2 y PI3 se responden
 El dataset utilizado proviene de Papadamou et al.~\cite{papadamou}, presentado en la 14th International AAAI Conference on Web and Social Media (ICWSM 2020) y publicado en Zenodo~\cite{papadamou_data}. Los datos fueron recolectados mediante la YouTube Data API~\cite{ytapi} y consisten en metadatos de video, no en el contenido audiovisual en sí. El equipo trabaja con tres formas del mismo dataset:
 \begin{itemize}
 \item \texttt{dataset\_groundtruth.csv}: versión tabular del ground truth, con 4,797 videos etiquetados manualmente por humanos. Es la fuente principal de entrenamiento y de evaluación formal (partición de prueba reservada y validación cruzada).
-\item \texttt{dataset\_consolidado\_parts/}: 844,702 videos únicos, particionados en 10 archivos \texttt{.csv.gz}, que integran los conjuntos adicionales (\texttt{elsagate\_related}, ${\sim}$233K videos; \texttt{other\_child\_related}, ${\sim}$155K; \texttt{random\_videos}, ${\sim}$482K; y \texttt{popular\_videos}, ${\sim}$11K). Se utilizarán para comprobación de consistencia y predicciones con el modelo entrenado; no tienen etiquetas humanas, salvo los videos que también están en el ground truth.
+\item \texttt{dataset\_consolidado\_parts/}: 844,702 videos únicos, particionados en 10 archivos \texttt{.csv.gz}, que integran los conjuntos adicionales (\texttt{elsagate\_related}, ${\sim}$233K videos; \texttt{other\_child\_related}, ${\sim}$155K; \texttt{random\_videos}, ${\sim}$482K; y \texttt{popular\_videos}, ${\sim}$11K). Se usan para la comprobación de consistencia con el modelo entrenado (Sección~\ref{sec:consistencia}); no tienen etiquetas humanas, salvo los videos que también están en el ground truth.
 \item Archivos JSON crudos comprimidos: formato original de la API, previo a la conversión a CSV.
 \end{itemize}
-El \texttt{dataset\_groundtruth.csv} contiene 4,797 videos, sin duplicados (\texttt{video\_id} único), y 22 variables (Tabla~\ref{tab:vars}). El análisis se dividió en dos partes: un análisis completo del ground truth y un análisis breve de las primeras 1,000 líneas del primer archivo JSON de cada conjunto adicional (no de muestras aleatorias). Se utilizó Python con Pandas, Matplotlib y Seaborn en Jupyter Notebook.
+El \texttt{dataset\_groundtruth.csv} contiene 4,797 videos, sin duplicados (\texttt{video\_id} único), y 22 variables. El análisis se dividió en dos partes: un análisis completo del ground truth y un análisis breve de las primeras 1,000 líneas del primer archivo JSON de cada conjunto adicional (no de muestras aleatorias). Se utilizó Python con Pandas, Matplotlib y Seaborn en Jupyter Notebook.
 
 % ----- [LEO] -----
 \subsection{Variables y variable objetivo}\label{sec:target}
-La Tabla~\ref{tab:vars} describe las 22 variables del ground truth, junto con el número de valores faltantes de cada una.
-
-\begin{table*}[!t]
-\caption{Variables del dataset de ground truth (4,797 videos)}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|l|r|p{6.0cm}|}
-\hline
-\textbf{Variable} & \textbf{Tipo} & \textbf{Faltantes} & \textbf{Descripción} \\
-\hline
-\texttt{video\_id} & texto (identificador) & 0 & ID único del video \\
-\hline
-\texttt{title} & texto & 0 & Título del video \\
-\hline
-\texttt{description} & texto & 506 & Descripción del video \\
-\hline
-\texttt{channel\_id} & texto (identificador) & 0 & ID único del canal \\
-\hline
-\texttt{channel\_title} & texto & 0 & Nombre del canal \\
-\hline
-\texttt{published\_at} & fecha y hora (ISO 8601) & 0 & Fecha de publicación \\
-\hline
-\texttt{category\_id} & categórica (17 valores) & 0 & Categoría de YouTube \\
-\hline
-\texttt{tags} & texto (lista) & 883 & Etiquetas asociadas al video \\
-\hline
-\texttt{duration\_iso} & texto (ISO 8601, p. ej. PT2M30S) & 1 & Duración en el formato original \\
-\hline
-\texttt{duration\_seconds} & numérica & 1 & Duración en segundos \\
-\hline
-\texttt{definition} & categórica (hd/sd) & 1 & Calidad del video (78.1\% hd, 21.8\% sd) \\
-\hline
-\texttt{caption} & booleana & 1 & Si el video tiene subtítulos \\
-\hline
-\texttt{licensed\_content} & booleana & 1 & Si el contenido tiene licencia comercial \\
-\hline
-\texttt{view\_count} & numérica & 3 & Número de visualizaciones \\
-\hline
-\texttt{like\_count} & numérica & 128 & Número de likes \\
-\hline
-\texttt{dislike\_count} & numérica & 128 & Número de dislikes \\
-\hline
-\texttt{comment\_count} & numérica & 228 & Número de comentarios \\
-\hline
-\texttt{favorite\_count} & numérica & 0 & Número de favoritos (YouTube ya no lo usa desde 2015) \\
-\hline
-\texttt{classification\_label} & categórica (4 clases) & 0 & \textbf{Variable objetivo} \\
-\hline
-\texttt{prediction} & categórica & 4,797 (100\%) & Predicción del clasificador original de los autores \\
-\hline
-\texttt{is\_ground\_truth} & booleana (constante = 1) & 0 & Confirma que el registro proviene de anotación manual \\
-\hline
-\texttt{source\_dataset} & categórica (constante = ``groundtruth'') & 0 & Origen del registro \\
-\hline
-\end{tabular}
-\label{tab:vars}
-\end{center}
-\end{table*}
+Las 22 variables se agrupan en: identificadores (\texttt{video\_id}, \texttt{channel\_id}, \texttt{channel\_title}); texto (\texttt{title}, \texttt{description}, \texttt{tags}); fecha de publicación; duración (\texttt{duration\_seconds} y su versión ISO 8601); categóricas (\texttt{category\_id} con 17 valores, \texttt{definition}, \texttt{caption}, \texttt{licensed\_content}); métricas de interacción (\texttt{view\_count}, \texttt{like\_count}, \texttt{dislike\_count}, \texttt{comment\_count} y \texttt{favorite\_count}, siempre 0); la variable objetivo \texttt{classification\_label}; y tres columnas de control (\texttt{prediction}, vacía en el ground truth, \texttt{is\_ground\_truth} y \texttt{source\_dataset}, ambas constantes).
 
 La variable objetivo es \texttt{classification\_label}, que asigna a cada video una de cuatro clases, definidas por los autores del dataset según el tipo de contenido y su público objetivo:
 \begin{itemize}
@@ -238,7 +175,7 @@ Esta clasificación no equivale directamente a una escala binaria ``apto/no apto
 
 % ----- [ADRIÁN] -----
 \subsection{Distribución de clases y desbalance}\label{sec:clases}
-El ground truth contiene 4,797 videos distribuidos en cuatro clases (Fig.~\ref{fig:clases}). Para cuantificar el desbalance se calculó el ratio de desbalance (IR) de cada clase respecto a la clase mayoritaria (\textit{irrelevant}):
+El ground truth contiene 4,797 videos distribuidos en cuatro clases. Para cuantificar el desbalance se calculó el ratio de desbalance (IR) de cada clase respecto a la clase mayoritaria (\textit{irrelevant}):
 \begin{equation}
 \mathrm{IR}_c=\frac{n_{\text{máx}}}{n_c}\label{eq:ir}
 \end{equation}
@@ -266,97 +203,47 @@ Restricted & 419 & 8.7 & $4.62\times$ \\
 \end{center}
 \end{table}
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_clases_groundtruth.png}
-\caption{Distribución de clases en el ground truth (número de videos y porcentaje).}
-\label{fig:clases}
-\end{figure}
-
-La clase mayoritaria es \textit{irrelevant} (40.4\%), seguida de \textit{suitable} (31.5\%). Las clases de interés para la detección (\textit{disturbing} y \textit{restricted}) representan el 28.1\% del dataset, y \textit{restricted} es 4.6 veces más pequeña que la clase mayoritaria. Este nivel de desbalance deberá considerarse en el entrenamiento del modelo.
+La clase mayoritaria es \textit{irrelevant} (40.4\%), seguida de \textit{suitable} (31.5\%). Las clases de interés para la detección (\textit{disturbing} y \textit{restricted}) representan el 28.1\% del dataset, y \textit{restricted} es 4.6 veces más pequeña que la clase mayoritaria. Este desbalance se trata con pesos de clase balanceados (Sección~\ref{sec:desbalance}).
 
 % ----- [ADRIÁN] -----
 \subsection{Valores faltantes y calidad de los datos}\label{sec:faltantes}
-La Fig.~\ref{fig:faltantes} muestra los valores faltantes por variable. \texttt{tags} es la más afectada (883 videos, 18.4\%), seguida de \texttt{description} (506, 10.5\%), \texttt{comment\_count} (228, 4.8\%), y \texttt{like\_count} y \texttt{dislike\_count} (128 cada una, 2.7\%). \texttt{view\_count} tiene 3 valores faltantes, y \texttt{duration\_seconds} y \texttt{definition} tienen 1 cada una. \texttt{title} y \texttt{category\_id} no presentan valores faltantes. La columna \texttt{prediction} está vacía en todo el ground truth (Sección~\ref{sec:leak}). Los conteos de datos válidos por variable numérica se muestran en la Tabla~\ref{tab:desc}. Además, 11 videos tienen 0 vistas y 10 tienen duración igual a 0, lo que exigirá tratar la división por cero al construir razones de interacción en el preprocesamiento. No se encontraron videos duplicados (mismo \texttt{video\_id}): los 4,797 registros son únicos.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/valores_faltantes_groundtruth.png}
-\caption{Porcentaje de valores faltantes por variable en el ground truth, con el número de videos entre paréntesis (se omite \texttt{prediction}, vacía en el 100\% de los registros).}
-\label{fig:faltantes}
-\end{figure}
+Respecto a los valores faltantes, \texttt{tags} es la más afectada (883 videos, 18.4\%), seguida de \texttt{description} (506, 10.5\%), \texttt{comment\_count} (228, 4.8\%), y \texttt{like\_count} y \texttt{dislike\_count} (128 cada una, 2.7\%). \texttt{view\_count} tiene 3 valores faltantes, y \texttt{duration\_seconds} y \texttt{definition} tienen 1 cada una. \texttt{title} y \texttt{category\_id} no presentan valores faltantes. La columna \texttt{prediction} está vacía en todo el ground truth (Sección~\ref{sec:leak}). Además, 11 videos tienen 0 vistas y 10 tienen duración igual a 0, lo que obliga a tratar la división por cero al construir razones de interacción (Sección~\ref{sec:prep}). No se encontraron videos duplicados (mismo \texttt{video\_id}): los 4,797 registros son únicos.
 
 % ----- [MAFER] -----
 \subsection{Estadísticas descriptivas}
-La Tabla~\ref{tab:desc} resume las variables numéricas del ground truth. Las métricas de interacción presentan alta variabilidad: por ejemplo, la media de \texttt{view\_count} (6,142,716.96) es muy superior a su mediana (90,093.5). La duración promedio es de 752.06 s (12.5 min), mientras que la mediana es de 345.5 s (5.8 min). Los máximos muestran outliers significativos, sobre todo en visualizaciones y duración (Sección~\ref{sec:outliers}).
-
-\begin{table*}[!t]
-\caption{Estadísticas descriptivas de las variables numéricas del ground truth}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|r|r|r|r|r|r|r|r|}
-\hline
-\textbf{Variable} & \textbf{Válidos} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Mín.} & \textbf{P25} & \textbf{Mediana} & \textbf{P75} & \textbf{Máx.} \\
-\hline
-\texttt{view\_count} & 4,794 & 6,142,716.96 & 43,836,538.05 & 0 & 1,140 & 90,093.50 & 1,775,452.75 & 1,664,660,083 \\
-\hline
-\texttt{like\_count} & 4,669 & 26,878.13 & 155,478.81 & 0 & 10 & 502.00 & 10,122 & 4,392,637 \\
-\hline
-\texttt{dislike\_count} & 4,669 & 3,718.92 & 25,425.08 & 0 & 1 & 53.00 & 1,097 & 1,071,513 \\
-\hline
-\texttt{comment\_count} & 4,569 & 2,378.41 & 12,849.85 & 0 & 1 & 49.00 & 763 & 323,267 \\
-\hline
-\texttt{duration\_seconds} & 4,796 & 752.06 & 1,986.99 & 0 & 167 & 345.50 & 706.25 & 39,433 \\
-\hline
-\end{tabular}
-\label{tab:desc}
-\end{center}
-\end{table*}
+Las métricas de interacción del ground truth presentan una asimetría muy fuerte: la media de \texttt{view\_count} (6,142,716.96) es muy superior a su mediana (90,093.5) y su máximo supera los 1,664 millones; lo mismo ocurre con likes (media 26,878, mediana 502), dislikes (3,719 y 53) y comentarios (2,378 y 49). La duración promedio es de 752.06 s (12.5 min), mientras que la mediana es de 345.5 s (5.8 min). Los máximos muestran outliers significativos, sobre todo en visualizaciones y duración (Sección~\ref{sec:outliers}).
 
 % ----- [MAFER] -----
 \subsection{Análisis por clase}
-La Tabla~\ref{tab:clase} compara las variables numéricas y de título entre clases. \textit{Suitable} presenta la mayor media de vistas (10,761,959.60), mientras que \textit{restricted} presenta la mayor mediana de vistas y la mayor media de comentarios. Las medias están fuertemente afectadas por outliers, por lo que las medianas ofrecen una comparación más robusta (Fig.~\ref{fig:eng_vl}). Por ello, no es correcto atribuir el mayor nivel de interacción a la clase \textit{disturbing}.
+La Tabla~\ref{tab:clase} compara las variables numéricas y de título entre clases. \textit{Suitable} presenta la mayor media de vistas (10,761,959.60), mientras que \textit{restricted} presenta la mayor mediana de vistas y la mayor media de comentarios. Las medias están fuertemente afectadas por outliers, por lo que las medianas ofrecen una comparación más robusta. Por ello, no es correcto atribuir el mayor nivel de interacción a la clase \textit{disturbing}.
 
-\begin{table*}[!t]
+\begin{table}[!t]
 \caption{Estadísticas por clase}
 \begin{center}
 \footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{|l|r|r|r|r|}
 \hline
-\textbf{Medida} & \textbf{Disturbing} & \textbf{Irrelevant} & \textbf{Restricted} & \textbf{Suitable} \\
+\textbf{Medida} & \textbf{Dist.} & \textbf{Irrel.} & \textbf{Restr.} & \textbf{Suit.} \\
 \hline
 Vistas (mediana) & 39,144 & 10,436 & 1,348,394 & 407,330 \\
 \hline
 Likes (mediana) & 202 & 87 & 5,130 & 1,342 \\
 \hline
-Comentarios (mediana) & 27 & 14 & 531 & 69.5 \\
+Coment. (mediana) & 27 & 14 & 531 & 69.5 \\
 \hline
-Duración, s (mediana) & 359 & 264 & 350 & 443.5 \\
+Duración s (med.) & 359 & 264 & 350 & 443.5 \\
 \hline
-Título, caracteres (media) & 58.98 & 46.80 & 44.79 & 61.88 \\
+Título, caract. (media) & 58.98 & 46.80 & 44.79 & 61.88 \\
 \hline
-Título, palabras (media) & 10.04 & 8.12 & 7.79 & 10.91 \\
+Título, palabras & 10.04 & 8.12 & 7.79 & 10.91 \\
 \hline
 \end{tabular}
 \label{tab:clase}
 \end{center}
-\end{table*}
+\end{table}
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_engagement_vistas_likes_groundtruth.png}
-\caption{Vistas y likes por clase (diagramas de caja en escala logarítmica simétrica, lineal cerca de cero para representar los videos con valor 0).}
-\label{fig:eng_vl}
-\end{figure}
-
-\textit{Duración.} \textit{Suitable} tiene la mayor duración media (872.00 s) y mediana (443.5 s). Las medianas se sitúan entre 264 y 443.5 s (4.4 a 7.4 min), y la variabilidad es especialmente alta en \textit{irrelevant} y \textit{suitable} por la presencia de videos muy largos (Fig.~\ref{fig:dur_box}).
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_duracion_box_groundtruth.png}
-\caption{Duración por clase (diagrama de caja, escala logarítmica). Se excluyen los 10 videos con duración 0.}
-\label{fig:dur_box}
-\end{figure}
+\textit{Duración.} \textit{Suitable} tiene la mayor duración media (872.00 s) y mediana (443.5 s). Las medianas se sitúan entre 264 y 443.5 s (4.4 a 7.4 min), y la variabilidad es especialmente alta en \textit{irrelevant} y \textit{suitable} por la presencia de videos muy largos.
 
 \textit{Categorías y definición.} El dataset abarca 17 categorías de YouTube (Fig.~\ref{fig:categ}; los nombres provienen de la YouTube Data API~\cite{ytapi}). Las tres más frecuentes son \textit{Entertainment}, \textit{People \& Blogs} y \textit{Film \& Animation}, y algunas categorías predominan en ciertas clases. Respecto a la calidad, 3,748 videos (78.1\%) están en HD y 1,048 (21.8\%) en SD. La asociación entre la definición y la clase es estadísticamente significativa ($\chi^2=23.30$, $p=3.5\times10^{-5}$), pero muy débil ($V$ de Cramér $=0.07$), por lo que la calidad del video no parece estar directamente relacionada con la clasificación de contenido.
 
@@ -369,7 +256,7 @@ Título, palabras (media) & 10.04 & 8.12 & 7.79 & 10.91 \\
 
 \textit{Títulos.} Los títulos tienen en promedio 53.74 caracteres y 9.34 palabras. Los títulos de \textit{suitable} tienen la mayor longitud media (61.88 caracteres) y cantidad media de palabras (10.91), seguidos por los de \textit{disturbing}, mientras que \textit{restricted} presenta los títulos más cortos en promedio (Tabla~\ref{tab:clase}). La longitud del título podría ser una característica discriminante.
 
-\textit{Etiquetas (tags).} 3,914 videos tienen tags y 883 (18.4\%) no tienen. Esos registros contienen 3,705 listas de tags distintas; al separar cada lista por \texttt{|} (eliminando espacios y cadenas vacías) se obtienen 40,096 tags individuales únicos y 73,640 asignaciones en total (18.8 tags por video en promedio). Al normalizar a minúsculas se consolidan 36,750 tags únicos, y la Tabla~\ref{tab:tags} usa esta versión, contando cada tag una sola vez por video. Al cruzar los tags individuales más frecuentes con la clase se observan asociaciones marcadas: el 74.6\% de los videos con el tag \textit{spiderman} son \textit{disturbing}, frente al 19.4\% en todo el ground truth, mientras que el 80.1\% de los videos con \textit{for kids} son \textit{suitable}, frente al 31.5\%. Los tags \textit{spiderman}, \textit{superhero}, \textit{elsa} y \textit{frozen} se distribuyen en 181, 133, 171 y 169 canales distintos, respectivamente, y el canal con más videos de cada uno aporta menos del 4\% del total, por lo que su asociación con \textit{disturbing} no depende de un solo canal. En cambio, para \textit{kids} (412 videos en 270 canales) y \textit{children} (215 videos en 129 canales), un único canal, el mismo que aparece con clases mixtas en la Sección~\ref{sec:leak}, aporta el 7.3\% y el 14.4\% de los videos, respectivamente. Estas asociaciones son descriptivas y su capacidad predictiva deberá confirmarse en el modelado.
+\textit{Etiquetas (tags).} 3,914 videos tienen tags y 883 (18.4\%) no tienen. Esos registros contienen 3,705 listas de tags distintas; al separar cada lista por \texttt{|} (eliminando espacios y cadenas vacías) se obtienen 40,096 tags individuales únicos y 73,640 asignaciones en total (18.8 tags por video en promedio). Al normalizar a minúsculas se consolidan 36,750 tags únicos, y la Tabla~\ref{tab:tags} usa esta versión, contando cada tag una sola vez por video. Al cruzar los tags individuales más frecuentes con la clase se observan asociaciones marcadas: el 74.6\% de los videos con el tag \textit{spiderman} son \textit{disturbing}, frente al 19.4\% en todo el ground truth, mientras que el 80.1\% de los videos con \textit{for kids} son \textit{suitable}, frente al 31.5\%. Los tags \textit{spiderman}, \textit{superhero}, \textit{elsa} y \textit{frozen} se distribuyen en 181, 133, 171 y 169 canales distintos, respectivamente, y el canal con más videos de cada uno aporta menos del 4\% del total, por lo que su asociación con \textit{disturbing} no depende de un solo canal. En cambio, para \textit{kids} (412 videos en 270 canales) y \textit{children} (215 videos en 129 canales), un único canal, el mismo que aparece con clases mixtas en la Sección~\ref{sec:leak}, aporta el 7.3\% y el 14.4\% de los videos, respectivamente. Estas asociaciones son descriptivas; en entrenamiento, \textit{spiderman}, \textit{superhero} y \textit{elsa} aparecen entre los tags más asociados a \textit{disturbing} (Tabla~\ref{tab:terms}).
 
 \begin{table}[!t]
 \caption{Tags individuales frecuentes (en minúsculas): \% de videos por clase}
@@ -407,9 +294,9 @@ for kids & 136 & 12.5 & 4.4 & 2.9 & 80.1 \\
 
 % ----- [ADRIÁN] -----
 \subsection{Detección de outliers}\label{sec:outliers}
-Se aplicó el método del rango intercuartílico (IQR) sobre las cinco variables numéricas, tanto en su escala original como sobre una transformación logarítmica $\log(1+x)$ (Tabla~\ref{tab:out}, Fig.~\ref{fig:box}). Esta segunda versión es necesaria porque, dada la fuerte asimetría de las métricas de interacción, el IQR en escala original marca como outlier a una fracción muy grande de las observaciones (entre 15.6\% y 16.9\%), lo cual no es informativo.
+Se aplicó el método del rango intercuartílico (IQR) sobre las cinco variables numéricas, tanto en su escala original como sobre una transformación logarítmica $\log(1+x)$ (Tabla~\ref{tab:out}). Esta segunda versión es necesaria porque, dada la fuerte asimetría de las métricas de interacción, el IQR en escala original marca como outlier a una fracción muy grande de las observaciones (entre 15.6\% y 16.9\%), lo cual no es informativo.
 
-En escala logarítmica, el número de outliers en las cuatro variables de interacción desciende a 0, lo que muestra que las observaciones siguen una distribución log-normal coherente y que no constituyen errores ni datos anómalos. Únicamente \texttt{duration\_seconds} retiene 173 outliers (3.61\%), correspondientes a videos notablemente cortos o largos. Al cruzar los valores extremos de vistas ($>$4.4M) y likes ($>$25.3K) con la clase, se observa que están repartidos entre todas las clases (en vistas: 379 \textit{suitable}, 175 \textit{irrelevant}, 132 \textit{restricted} y 116 \textit{disturbing}). Por ello, corresponden a contenido popular legítimo dentro de cada categoría y no deben descartarse, sino transformarse mediante $\log(1+x)$ en la etapa 2.
+En escala logarítmica, el número de outliers en las cuatro variables de interacción desciende a 0, lo que muestra que las observaciones siguen una distribución log-normal coherente y que no constituyen errores ni datos anómalos. Únicamente \texttt{duration\_seconds} retiene 173 outliers (3.61\%), correspondientes a videos notablemente cortos o largos. Al cruzar los valores extremos de vistas ($>$4.4M) y likes ($>$25.3K) con la clase, se observa que están repartidos entre todas las clases (en vistas: 379 \textit{suitable}, 175 \textit{irrelevant}, 132 \textit{restricted} y 116 \textit{disturbing}). Por ello, corresponden a contenido popular legítimo dentro de cada categoría y no deben descartarse, sino transformarse mediante $\log(1+x)$ (Sección~\ref{sec:prep}).
 
 \begin{table}[!t]
 \caption{Outliers detectados por el método IQR}
@@ -436,13 +323,6 @@ En escala logarítmica, el número de outliers en las cuatro variables de intera
 \end{center}
 \end{table}
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{images/outliers_boxplots_groundtruth.png}
-\caption{Diagramas de caja de las variables numéricas en escala original (arriba) y logarítmica $\log(1+x)$ (abajo).}
-\label{fig:box}
-\end{figure*}
-
 % ----- [ADRIÁN] -----
 \subsection{Relaciones entre variables}\label{sec:corr}
 Se analizó la correlación entre las variables numéricas (Pearson en escala original y logarítmica, y Spearman) para identificar redundancia y posibles problemas de multicolinealidad (la Fig.~\ref{fig:corr_spearman} muestra la matriz de Spearman). Las métricas de interacción presentan una correlación excepcionalmente alta entre sí: \texttt{view\_count} y \texttt{dislike\_count} (Spearman 0.966, Pearson log 0.940), \texttt{view\_count} y \texttt{like\_count} (Spearman 0.956, Pearson log 0.955), y \texttt{like\_count} y \texttt{comment\_count} (Spearman 0.948, Pearson log 0.947). Esta colinealidad casi unitaria desaconseja emplear los cuatro conteos como variables directas simultáneas; en su lugar, se deben formular razones normalizadas (likes/vistas, comentarios/vistas). Por su parte, \texttt{duration\_seconds} mantiene correlaciones bajas con las variables de interacción (Pearson log entre 0.228 y 0.241, Spearman entre 0.217 y 0.225), por lo que provee una señal complementaria e independiente.
@@ -454,75 +334,25 @@ Se analizó la correlación entre las variables numéricas (Pearson en escala or
 \label{fig:corr_spearman}
 \end{figure}
 
-Adicionalmente, se aplicó la prueba de Kruskal-Wallis para evaluar si la distribución de cada variable numérica difiere de forma estadísticamente significativa entre las cuatro clases (Tabla~\ref{tab:kw}). Las cinco variables resultaron significativas ($p<0.05$; de hecho, todas con $p<10^{-27}$). No obstante, dado el tamaño muestral (${\sim}$4,800 observaciones), diferencias distributivas pequeñas pueden alcanzar significancia con facilidad; por ello, este resultado funciona como un filtro preliminar positivo (ninguna variable se descarta a priori), y su capacidad predictiva deberá confirmarse en la etapa 2 mediante métricas de importancia de características con los modelos entrenados.
-
-\begin{table}[!t]
-\caption{Prueba de Kruskal-Wallis: variable numérica vs. clase}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|r|r|}
-\hline
-\textbf{Variable} & \textbf{Estadístico $H$} & \textbf{$p$-valor} \\
-\hline
-\texttt{view\_count} & 523.87 & $3.20\times10^{-113}$ \\
-\hline
-\texttt{like\_count} & 232.61 & $3.76\times10^{-50}$ \\
-\hline
-\texttt{dislike\_count} & 399.39 & $3.00\times10^{-86}$ \\
-\hline
-\texttt{comment\_count} & 150.65 & $1.91\times10^{-32}$ \\
-\hline
-\texttt{duration\_seconds} & 129.94 & $5.57\times10^{-28}$ \\
-\hline
-\end{tabular}
-\label{tab:kw}
-\end{center}
-\end{table}
+Adicionalmente, se aplicó la prueba de Kruskal-Wallis para evaluar si la distribución de cada variable numérica difiere de forma estadísticamente significativa entre las cuatro clases. Las cinco variables resultaron significativas, todas con $p<10^{-27}$ (desde $H=129.9$ en \texttt{duration\_seconds} hasta $H=523.9$ en \texttt{view\_count}). No obstante, dado el tamaño muestral (${\sim}$4,800 observaciones), diferencias distributivas pequeñas pueden alcanzar significancia con facilidad; por ello, este resultado funciona como un filtro preliminar positivo (ninguna variable se descarta a priori), y su capacidad predictiva se evaluó después con SHAP sobre el modelo final (Sección~\ref{sec:shap}).
 
 % ----- [MAFER] -----
 \subsection{Conjuntos adicionales}\label{sec:adic}
-Se analizaron las primeras 1,000 líneas del primer archivo de cada conjunto adicional. No son muestras aleatorias y en ellas predominan videos que también están en el ground truth (780 en \texttt{elsagate\_related}, 70 en \texttt{other\_child\_related}, 34 en \texttt{random\_videos} y 490 en \texttt{popular\_videos}), por lo que los porcentajes de videos predichos como inapropiados no representan la prevalencia en los conjuntos completos. Como muestra la Tabla~\ref{tab:add}, casi todos los videos predichos como inapropiados pertenecen al ground truth: en \texttt{elsagate\_related}, 472 de los 780 videos del ground truth (60.5\%) fueron predichos como inapropiados, frente a 1 de los 220 restantes (0.5\%); en los otros tres conjuntos, ningún video fuera del ground truth fue predicho como inapropiado. Fuera del ground truth solo existe la predicción automática del clasificador, sin etiquetas humanas.
-
-Para no depender de estas primeras líneas, se revisó también el corpus consolidado completo (844,702 videos únicos), en el que cada video del ground truth aparece una sola vez y queda separado de los conjuntos adicionales. Fuera del ground truth, el clasificador original predijo como inapropiados 1,260 de 230,873 videos de \texttt{elsagate\_related} (0.55\%), 586 de 137,043 de \texttt{other\_child\_related} (0.43\%), 3,388 de 462,382 de \texttt{random\_videos} (0.73\%) y ninguno de los 9,607 de \texttt{popular\_videos}. Por tanto, la ausencia de videos inapropiados fuera del ground truth en la Tabla~\ref{tab:add} es un efecto de la muestra analizada y no se mantiene en los conjuntos completos. Como el consolidado asigna un único conjunto de origen a cada video, un video presente en varios conjuntos se cuenta solo en uno.
-
-\begin{table}[!t]
-\caption{Videos predichos como inapropiados en las primeras 1,000 líneas de cada conjunto adicional$^{\mathrm{a}}$}
-\begin{center}
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{|l|r|r|r|r|}
-\hline
- & \multicolumn{2}{c|}{\textbf{Videos}} & \multicolumn{2}{c|}{\textbf{Inapropiados}} \\
-\cline{2-5}
-\textbf{Conjunto} & \textbf{En GT} & \textbf{Fuera} & \textbf{En GT} & \textbf{Fuera} \\
-\hline
-Elsagate & 780 & 220 & 472 (60.5\%) & 1 (0.5\%) \\
-\hline
-Other child & 70 & 930 & 15 (21.4\%) & 0 (0.0\%) \\
-\hline
-Random & 34 & 966 & 3 (8.8\%) & 0 (0.0\%) \\
-\hline
-Popular & 490 & 510 & 27 (5.5\%) & 0 (0.0\%) \\
-\hline
-\multicolumn{5}{l}{\scriptsize $^{\mathrm{a}}$GT: ground truth. Predicción automática del clasificador.}
-\end{tabular}
-\label{tab:add}
-\end{center}
-\end{table}
+Un primer análisis de las 1,000 primeras líneas de cada conjunto mostró que en ellas predominan videos del ground truth (78.0\% en \texttt{elsagate\_related} y 49.0\% en \texttt{popular\_videos}), por lo que se revisó el corpus consolidado completo (844,702 videos únicos), en el que cada video del ground truth aparece una sola vez y queda separado de los conjuntos adicionales. Fuera del ground truth, el clasificador original predijo como inapropiados 1,260 de 230,873 videos de \texttt{elsagate\_related} (0.55\%), 586 de 137,043 de \texttt{other\_child\_related} (0.43\%), 3,388 de 462,382 de \texttt{random\_videos} (0.73\%) y ninguno de los 9,607 de \texttt{popular\_videos}. Como el consolidado asigna un único conjunto de origen a cada video, un video presente en varios conjuntos se cuenta solo en uno.
 
 % ----- [ADRIÁN] -----
 \subsection{Posible fuga de datos (data leakage)}\label{sec:leak}
-Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el diseño experimental de la etapa 2:
+Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el diseño experimental:
 \begin{enumerate}
 \item \textbf{Columnas que codifican la etiqueta o la predicción original.} \texttt{prediction} e \texttt{is\_ground\_truth} son generadas por el clasificador automático de los autores del dataset y por el proceso de anotación, respectivamente. No son información disponible de forma independiente para un video nuevo, por lo que no deben usarse como características. En el ground truth, \texttt{prediction} contiene 100\% de valores nulos (4,797 registros) e \texttt{is\_ground\_truth} toma el valor constante 1.
 \item \textbf{Duplicados dentro del ground truth.} Se constató que existen 0 videos duplicados (mismo \texttt{video\_id}); los 4,797 registros son videos únicos. De existir duplicados, un mismo video repetido en entrenamiento y validación inflaría artificialmente el desempeño.
-\item \textbf{Solapamiento entre ground truth y conjuntos adicionales.} Como el ground truth se usa para entrenar y los conjuntos adicionales para comprobación de consistencia, un video presente en ambos dejaría de ser una prueba genuina de generalización. La Tabla~\ref{tab:add} muestra los videos en común (sobre las 1,000 líneas analizadas): 780 (78.0\%) en \texttt{elsagate\_related}, 70 (7.0\%) en \texttt{other\_child\_related}, 34 (3.4\%) en \texttt{random\_videos} y 490 (49.0\%) en \texttt{popular\_videos}. Estos videos deberán excluirse de la comprobación.
-\item \textbf{Concentración de videos por canal.} El ground truth contiene 3,818 canales únicos (por \texttt{channel\_id}), de los cuales 418 tienen más de un video (máximo de 33 videos para un canal). Entre los 13 canales con 12 o más videos (seis empatan con exactamente 12), 11 concentran el 100\% en \textit{suitable}, uno tiene el 91.7\% en \textit{suitable} (11 \textit{suitable} y 1 \textit{disturbing}) y solo uno (33 videos) presenta mezcla de clases (20 \textit{disturbing} y 13 \textit{suitable}). Esto implica riesgo de que el modelo memorice características propias del canal, y de fuga de datos si videos del mismo canal quedan repartidos entre entrenamiento y validación o prueba. Se recomienda una partición agrupada por canal (por ejemplo, \texttt{StratifiedGroupKFold}, tanto para el conjunto de prueba como para la validación cruzada) además de la estratificación por clase.
+\item \textbf{Solapamiento entre ground truth y conjuntos adicionales.} Como el ground truth se usa para entrenar y los conjuntos adicionales para comprobación de consistencia, un video presente en ambos dejaría de ser una prueba genuina de generalización. En las 1,000 primeras líneas analizadas, los videos en común son 780 (78.0\%) en \texttt{elsagate\_related}, 70 (7.0\%) en \texttt{other\_child\_related}, 34 (3.4\%) en \texttt{random\_videos} y 490 (49.0\%) en \texttt{popular\_videos}. Estos videos se excluyen de la comprobación (Sección~\ref{sec:consistencia}).
+\item \textbf{Concentración de videos por canal.} El ground truth contiene 3,818 canales únicos (por \texttt{channel\_id}), de los cuales 418 tienen más de un video (máximo de 33 videos para un canal). Entre los 13 canales con 12 o más videos (seis empatan con exactamente 12), 11 concentran el 100\% en \textit{suitable}, uno tiene el 91.7\% en \textit{suitable} (11 \textit{suitable} y 1 \textit{disturbing}) y solo uno (33 videos) presenta mezcla de clases (20 \textit{disturbing} y 13 \textit{suitable}). Esto implica riesgo de que el modelo memorice características propias del canal, y de fuga de datos si videos del mismo canal quedan repartidos entre entrenamiento y validación o prueba. Por ello, tanto el conjunto de prueba como la validación cruzada se agrupan por canal y se estratifican por clase con \texttt{StratifiedGroupKFold} (Sección~\ref{sec:validacion}).
 \end{enumerate}
 
 % ----- [ADRIÁN] -----
 \subsection{Limitaciones}\label{sec:limit1}
-Los conjuntos adicionales se analizaron solo con las primeras 1,000 líneas de un archivo, que no son muestras aleatorias y no representan la distribución de los conjuntos completos. Los datos corresponden a un periodo específico (2018) y YouTube ha cambiado significativamente desde entonces, por lo que los patrones pueden haber evolucionado. Además, las etiquetas manuales pueden contener sesgos subjetivos de los anotadores humanos.
+Los conjuntos adicionales se analizaron solo con las primeras 1,000 líneas de un archivo, que no son muestras aleatorias y no representan la distribución de los conjuntos completos. Los datos corresponden a un periodo específico (la mayoría de 2014 a 2018, con videos hasta 2019) y YouTube ha cambiado significativamente desde entonces, por lo que los patrones pueden haber evolucionado. Además, las etiquetas manuales pueden contener sesgos subjetivos de los anotadores humanos.
 
 % =====================================================================
 % PREPROCESAMIENTO E INGENIERÍA DE CARACTERÍSTICAS  [MARIELA]
@@ -535,7 +365,7 @@ Antes de transformar los datos se reservó el conjunto de prueba con \texttt{Str
 
 \subsection{Transformaciones aplicadas}
 \begin{itemize}
-\item \textbf{Valores faltantes numéricos:} \texttt{like\_count}, \texttt{dislike\_count} (128), \texttt{comment\_count} (228), \texttt{view\_count} (3) y \texttt{duration\_seconds} (1) se imputan con la mediana de entrenamiento, robusta frente a la fuerte asimetría observada (Tabla~\ref{tab:desc}).
+\item \textbf{Valores faltantes numéricos:} \texttt{like\_count}, \texttt{dislike\_count} (128), \texttt{comment\_count} (228), \texttt{view\_count} (3) y \texttt{duration\_seconds} (1) se imputan con la mediana de entrenamiento, robusta frente a la fuerte asimetría observada (Sección~\ref{sec:outliers}).
 \item \textbf{Valores faltantes categóricos:} \texttt{definition}, \texttt{caption} y \texttt{licensed\_content} (1 faltante cada una) se imputan con la moda de entrenamiento.
 \item \textbf{Texto faltante:} la ausencia de descripción (506) o de tags (883) se representa como texto vacío, sin inventar contenido. Los tags se normalizan a minúsculas y se separan por \texttt{|}, como en el análisis de la Sección~\ref{sec:target}.
 \item \textbf{Transformación logarítmica:} los cuatro conteos de interacción se transforman con $\log(1+x)$, que elimina los outliers detectados por el IQR (Tabla~\ref{tab:out}) sin descartar videos.
@@ -575,8 +405,34 @@ Suitable & tom and jerry, cartoon, kids, animation, animated cartoon \\
 No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth} (codifican el proceso de clasificación o de anotación), \texttt{source\_dataset} (constante), \texttt{favorite\_count} (siempre 0), \texttt{published\_at} y \texttt{duration\_iso} (redundante con \texttt{duration\_seconds}), ni los identificadores \texttt{video\_id}, \texttt{channel\_id} y \texttt{channel\_title}, para que el modelo no memorice canales (Sección~\ref{sec:leak}); \texttt{channel\_id} se conserva solo para agrupar la partición. Las mismas transformaciones, con los valores de imputación de entrenamiento, se aplican a los conjuntos adicionales.
 
 % =====================================================================
-% METODOLOGÍA Y MODELOS  [LEO]  --  PENDIENTE (IV.A baseline, IV.B modelos, IV.C hiperparámetros)
+% METODOLOGÍA Y MODELOS  [LEO]
 % =====================================================================
+\section{Metodología y Modelos}\label{sec:metodologia}
+Todos los modelos se implementaron con scikit-learn~\cite{sklearn} y LightGBM~\cite{lightgbm} como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
+
+\subsection{Modelos baseline}\label{sec:baseline}
+\begin{itemize}
+\item \textbf{Dummy (clase mayoritaria):} siempre predice \textit{irrelevant}. Es el piso de referencia de H1: cualquier modelo útil debe superarlo con claridad en F1 macro.
+\item \textbf{Regresión logística + TF-IDF:} modelo lineal estándar para clasificación de texto disperso y de alta dimensión, con pesos de clase balanceados y $C=1$.
+\item \textbf{Naive Bayes multinomial + TF-IDF:} alternativa probabilística muy rápida, habitual como baseline de texto ($\alpha=0.1$).
+\end{itemize}
+Los dos baselines de texto miden cuánto se puede lograr solo con el título, la descripción y los tags, sin las variables de interacción.
+
+\subsection{Modelos comparados}\label{sec:modelos}
+\begin{itemize}
+\item \textbf{Random Forest y LightGBM sobre metadatos:} modelos de árboles adecuados para variables tabulares con escalas y asimetrías distintas y con interacciones no lineales (por ejemplo, entre duración y vistas). Random Forest usa 500 árboles; LightGBM, \textit{gradient boosting} con 400 árboles y \texttt{learning\_rate} de 0.05.
+\item \textbf{LightGBM combinado:} el bloque TF-IDF (38,256 columnas dispersas) se reduce a 200 componentes con \texttt{TruncatedSVD}, porque los árboles no aprovechan bien matrices tan dispersas, y se concatena con los metadatos.
+\item \textbf{Regresión logística combinada:} usa el TF-IDF completo junto con los metadatos estandarizados. Mantiene toda la información del texto y permite interpretar cada coeficiente, lo que es importante para la transparencia (Sección~\ref{sec:etica}).
+\end{itemize}
+Además, un \textit{ablation study} entrena el mismo LightGBM con solo texto, solo metadatos y ambos, para medir el aporte de cada fuente de información. Todos los modelos usan \texttt{class\_weight="balanced"} (Sección~\ref{sec:desbalance}).
+
+\subsection{Selección de hiperparámetros}\label{sec:hiper}
+Los dos mejores modelos combinados se ajustaron con \texttt{RandomizedSearchCV} (20 combinaciones, semilla 42) sobre las mismas cinco particiones agrupadas del conjunto de entrenamiento, con el F1 macro medio como criterio:
+\begin{itemize}
+\item \textbf{Regresión logística:} $C \in [0.05, 20]$ con distribución log-uniforme, ya que la regularización actúa en escala multiplicativa. Mejor valor: $C=1.16$.
+\item \textbf{LightGBM:} número de árboles $\in [200, 1000]$, \texttt{learning\_rate} $\in [0.01, 0.2]$, \texttt{num\_leaves} $\in [8, 64]$, \texttt{min\_child\_samples} $\in [5, 60]$, \texttt{colsample\_bytree} $\in [0.4, 1.0]$ y \texttt{reg\_lambda} $\in [0.001, 10]$. La mejor combinación (227 árboles, 14 hojas y $\lambda=2.5$) favorece modelos más simples y regularizados.
+\end{itemize}
+La regresión logística ajustada obtuvo un F1 macro de $0.710 \pm 0.024$ frente a $0.698 \pm 0.027$ de LightGBM, y un recall en \textit{restricted} de 0.558 frente a 0.478, por lo que fue elegida como modelo final. Como ambos usan las mismas particiones, se compararon también fold a fold: la regresión logística supera a LightGBM en 4 de 5 particiones en F1 macro (diferencia media $+0.012 \pm 0.008$, $t$ pareada con $p=0.03$) y en las 5 en recall de \textit{restricted} ($+0.080$, $p=0.01$); con cinco particiones que comparten datos de entrenamiento, estos p-valores son solo orientativos. Se reentrenó con todo el conjunto de entrenamiento y se evaluó una sola vez en prueba (Sección~\ref{sec:final}).
 
 % =====================================================================
 % DISEÑO EXPERIMENTAL Y EVALUACIÓN
@@ -662,7 +518,7 @@ Se adoptó \texttt{class\_weight=\char"0022 balanced\char"0022} en todos los mod
 \section{Resultados y Análisis}\label{sec:resultados}
 
 \subsection{Comparación de modelos}\label{sec:comp}
-La Tabla~\ref{tab:modelos} compara todos los modelos evaluados con validación cruzada de 5 particiones agrupadas por canal (solo sobre train, 3,842 videos). El modelo combinado de regresión logística (TF-IDF + metadatos) obtiene el mejor F1 macro y el mayor recall en \textit{restricted}, la clase más difícil. El ablation study muestra que el texto aporta más que los metadatos solos, y que la combinación supera a cualquiera de las dos fuentes por separado.
+La Tabla~\ref{tab:modelos} compara todos los modelos evaluados con validación cruzada de 5 particiones agrupadas por canal (solo sobre train, 3,842 videos). El modelo combinado de regresión logística (TF-IDF + metadatos) obtiene el mejor F1 macro y el mayor recall en \textit{restricted}, la clase más difícil. El ablation study muestra que el texto aporta más que los metadatos solos, y que la combinación supera a cualquiera de las dos fuentes por separado. La tabla usa los hiperparámetros iniciales; la versión ajustada ($C=1.16$, Sección~\ref{sec:hiper}) obtiene el mismo F1 macro ($0.710 \pm 0.024$).
 
 \begin{table}[!t]
 \caption{Comparación de modelos — validación cruzada agrupada por canal (media $\pm$ desv.\ est., 5 folds)}
@@ -687,7 +543,7 @@ LightGBM (texto solo) & 0.625 $\pm$ 0.002 & 0.609 & 0.157 \\
 \hline
 LightGBM combinado & 0.682 $\pm$ 0.020 & 0.621 & 0.331 \\
 \hline
-\textbf{LogReg combinado} & \textbf{0.710 $\pm$ 0.023} & \textbf{0.664} & \textbf{0.566} \\
+\textbf{LogReg combinado ($C{=}1$)} & \textbf{0.710 $\pm$ 0.023} & \textbf{0.664} & \textbf{0.566} \\
 \hline
 \end{tabular}
 \label{tab:modelos}
@@ -721,40 +577,40 @@ Suitable & 0.815 & 0.797 & 0.806 & 0.929 & 0.885 \\
 \end{center}
 \end{table}
 
-La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas Precision-Recall para cada clase. \textit{Restricted} concentra el AUC y AP más bajos (0.878 y 0.483 respectivamente), lo que refleja la escasez de ejemplos de entrenamiento (419 videos, $\mathrm{IR}=4.62\times$) y la superposición con \textit{irrelevant} en el espacio de metadatos. La Fig.~\ref{fig:cm} presenta la matriz de confusión: los principales errores ocurren entre \textit{suitable} $\leftrightarrow$ \textit{disturbing} (29 FN y 14 FP) y entre \textit{irrelevant} $\leftrightarrow$ \textit{restricted} (22 FN y 24 FP).
+La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas Precision-Recall para cada clase. \textit{Restricted} concentra el AUC y AP más bajos (0.878 y 0.483 respectivamente), lo que refleja la escasez de ejemplos (339 videos en entrenamiento, $\mathrm{IR}=4.62\times$) y la superposición con \textit{irrelevant} en el espacio de metadatos. La Fig.~\ref{fig:cm} presenta la matriz de confusión: los principales errores ocurren entre \textit{suitable} $\leftrightarrow$ \textit{disturbing} (29 FN y 14 FP) y entre \textit{irrelevant} $\leftrightarrow$ \textit{restricted} (22 FN y 24 FP).
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/roc_curves.png}
+\includegraphics[width=0.85\columnwidth]{images/roc_curves.png}
 \caption{Curvas ROC one-vs-rest. AUC macro = 0.914.}
 \label{fig:roc}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/pr_curves.png}
+\includegraphics[width=0.85\columnwidth]{images/pr_curves.png}
 \caption{Curvas Precision-Recall. AP macro = 0.772. La clase \textit{restricted} muestra la mayor caída por su bajo soporte (80 videos en test).}
 \label{fig:pr}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/confusion_matrix.png}
+\includegraphics[width=0.85\columnwidth]{images/confusion_matrix.png}
 \caption{Matriz de confusión sobre el conjunto de prueba: conteos absolutos (izquierda) y normalizada por fila (derecha).}
 \label{fig:cm}
 \end{figure}
 
 \subsection{Importancia de características (SHAP)}\label{sec:shap}
-Se calcularon valores SHAP con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: las features de texto (TF-IDF de título y tags) dominan, lo que es consistente con el ablation study, donde el texto solo alcanza F1=0.625 frente a 0.580 de los metadatos solos.
+Se calcularon valores SHAP~\cite{shap} con \texttt{LinearExplainer} (exacto para regresión logística) sobre los 955 videos de prueba, con la media de entrenamiento como referencia. La Fig.~\ref{fig:shap} muestra la importancia global media $|\text{SHAP}|$: de forma individual, las características más influyentes son los conteos de interacción (likes, vistas, dislikes y comentarios), seguidos de la categoría y \texttt{licensed\_content}; los primeros términos de texto (\textit{peppa}, \textit{pig}, \textit{elsa}) aparecen más abajo. Sin embargo, la importancia del texto se reparte entre 38,256 columnas TF-IDF. Sumada por bloque, el texto aporta el 65.1\% de la importancia en \textit{disturbing} y el 55.1\% en \textit{suitable}, mientras que en \textit{restricted} (40.5\%) e \textit{irrelevant} (41.7\%) pesan más los metadatos. Esto es consistente con el ablation study, donde el texto solo (F1 0.625) supera a los metadatos solos (0.580) y la combinación supera a ambos.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/shap_summary.png}
+\includegraphics[width=0.85\columnwidth]{images/shap_summary.png}
 \caption{Importancia SHAP global (top 20 features, media $|\text{SHAP}|$ sobre todas las clases).}
 \label{fig:shap}
 \end{figure}
 
-Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importancia para \textit{disturbing} y \textit{restricted}. Para \textit{disturbing}, los términos del título (``peppa'', ``elsa'') y los metadatos de engagement (\texttt{like\_count\_log1p}, \texttt{duration\_seconds}) son las señales más fuertes. Para \textit{restricted}, los conteos de interacción dominan sobre el texto, ya que el vocabulario explícito es poco frecuente en el dataset.
+Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importancia para \textit{disturbing} y \textit{restricted}. Para \textit{disturbing}, junto a los likes, la duración y la categoría aparecen términos del título asociados a personajes infantiles (\textit{peppa}, \textit{pig}, \textit{elsa}), coherentes con la Tabla~\ref{tab:terms}. Para \textit{restricted}, los conteos de interacción dominan sobre el texto, ya que el vocabulario explícito es poco frecuente en el dataset.
 
 \begin{table}[!t]
 \caption{Top 5 features SHAP para las clases críticas}
@@ -765,17 +621,17 @@ Por clase, la Tabla~\ref{tab:shap} resume las cinco features de mayor importanci
 \textbf{Clase} & \textbf{Feature} & \textbf{$|\overline{\text{SHAP}}|$} \\
 \hline
 \multirow{5}{*}{Disturbing}
- & like\_count\_log1p & 0.275 \\
- & category\_id (1) & 0.224 \\
- & duration\_seconds & 0.222 \\
- & licensed\_content & 0.150 \\
- & title\_chars & 0.148 \\
+ & like\_count\_log1p & 0.272 \\
+ & duration\_seconds & 0.247 \\
+ & category\_id (1) & 0.219 \\
+ & licensed\_content & 0.151 \\
+ & title\_chars & 0.149 \\
 \hline
 \multirow{5}{*}{Restricted}
- & like\_count\_log1p & 1.211 \\
- & dislike\_count\_log1p & 0.811 \\
- & view\_count\_log1p & 0.600 \\
- & comment\_count\_log1p & 0.288 \\
+ & like\_count\_log1p & 1.194 \\
+ & dislike\_count\_log1p & 0.809 \\
+ & view\_count\_log1p & 0.589 \\
+ & comment\_count\_log1p & 0.284 \\
  & licensed\_content & 0.178 \\
 \hline
 \end{tabular}
@@ -792,18 +648,60 @@ Se analizaron los falsos negativos de las dos clases críticas sobre los 955 vid
 
 La confusión entre \textit{irrelevant} y \textit{restricted} (24 FP en restricted, 22 FN de restricted hacia irrelevant) sugiere que el texto no siempre distingue contenido adulto disfrazado. Los metadatos de engagement ayudan —\textit{restricted} tiene medianas de vistas y likes muy superiores (Tabla~\ref{tab:clase})— pero no eliminan la ambigüedad.
 
+% ----- [ADRIÁN] VI.D Consistencia en conjuntos adicionales
+\subsection{Consistencia en conjuntos adicionales}\label{sec:consistencia}
+El modelo final se aplicó a los 839,905 videos de los conjuntos adicionales que no forman parte del ground truth (\texttt{modeling/additional\_inference.py}), con las mismas transformaciones y los valores de imputación de entrenamiento. Para comparar con la predicción binaria del clasificador original~\cite{papadamou}, un video se considera \textit{inapropiado} si el modelo predice \textit{disturbing} o \textit{restricted}. Como no hay etiquetas humanas, la Tabla~\ref{tab:consist} mide consistencia entre ambos clasificadores y no eficacia.
+
+\begin{table}[!t]
+\caption{Videos predichos como inapropiados fuera del ground truth: modelo final vs.\ clasificador original}
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{|l|r|r|r|r|r|}
+\hline
+\textbf{Conjunto} & \textbf{Videos} & \textbf{Modelo} & \textbf{Original} & \textbf{Acuerdo} & \textbf{Kappa} \\
+\hline
+Elsagate & 230,873 & 21.78\% & 0.55\% & 77.87\% & $-0.002$ \\
+\hline
+Other child & 137,043 & 11.92\% & 0.43\% & 87.67\% & $-0.007$ \\
+\hline
+Random & 462,382 & 6.74\% & 0.73\% & 92.62\% & 0.000 \\
+\hline
+Popular & 9,607 & 12.00\% & 0.00\% & 88.00\% & 0.000 \\
+\hline
+\end{tabular}
+\label{tab:consist}
+\end{center}
+\end{table}
+
+\textbf{PI2 (\texttt{elsagate\_related}):} el modelo predice como inapropiados el 21.78\% de los videos (8.59\% \textit{disturbing} y 13.19\% \textit{restricted}), unas 40 veces más que el clasificador original (0.55\%). Por tanto, \textbf{H2 no se cumple}. El acuerdo de 77.87\% se debe casi por completo a los videos que ambos consideran apropiados: el kappa de Cohen~\cite{cohen} es prácticamente 0, y de los 1,260 videos que marcó el clasificador original, el modelo coincide solo en 227 (18.0\%).
+
+\textbf{PI3 (\texttt{other\_child\_related}, \texttt{random}, \texttt{popular}):} las proporciones del modelo (11.92\%, 6.74\% y 12.00\%) son también un orden de magnitud mayores que las del clasificador original, por lo que \textbf{H3 tampoco se cumple}. Sí se conserva el orden de riesgo esperado: la proporción es máxima en \texttt{elsagate\_related}, y la clase \textit{disturbing} (la más ligada al fenómeno Elsagate) cae de 8.59\% en ese conjunto a 1.20\% en \texttt{random}.
+
+\textbf{Revisión cualitativa de los desacuerdos:} el exceso de alertas proviene sobre todo de \textit{restricted}, que el modelo asigna a contenido general para adultos que no se dirige a niños, como música (\emph{``When I Was Your Man - Bruno Mars lyric''}), deportes (\emph{``Super Bowl XLIX: Patriots vs. Seahawks highlights''}), lucha libre o videos en idiomas poco presentes en el ground truth. Estos videos tienen conteos de interacción altos, que son precisamente las características con mayor peso SHAP para \textit{restricted} (Tabla~\ref{tab:shap}). En el ground truth casi todo el contenido es infantil o lo parece, por lo que el modelo no aprendió a separar ``contenido para adultos inofensivo'' de ``contenido restringido''; además, \texttt{class\_weight="balanced"} favorece las clases minoritarias. A la inversa, varias alertas del clasificador original que el modelo no reproduce parecen errores de ese clasificador (por ejemplo, un episodio de Peppa Pig en ruso, un video eliminado o videos de fútbol). Los casos en que ambos coinciden sí incluyen ejemplos típicos de Elsagate, como \emph{``Minecraft SPONGEBOB.EXE - JUMPING INTO SPONGEBOBS NIGHTMARE IS REALLY SCARY!!''}.
+
+En conjunto, el modelo se desplaza hacia más alertas cuando cambia la distribución de los datos. Es útil para priorizar la revisión humana de contenido infantil, pero no debería aplicarse sin recalibrar sobre plataformas abiertas, donde la mayoría del contenido no es infantil.
+
 % =====================================================================
 % DISCUSIÓN Y LIMITACIONES  [ADRIÁN]
 % =====================================================================
 \section{Discusión y Limitaciones}\label{sec:discusion}
 
-% VII.A Interpretación de resultados  --  PENDIENTE (requiere resultados de las Secciones VI)
+\subsection{Interpretación de resultados}\label{sec:interp}
+\textbf{Por qué ganó la regresión logística combinada.} Con 3,842 videos de entrenamiento y más de 38 mil columnas de texto, el problema está en el régimen de alta dimensión y pocos ejemplos, donde los modelos lineales regularizados suelen funcionar mejor que los árboles. LightGBM necesita reducir el texto con SVD, y esa reducción conserva las direcciones de mayor varianza (el vocabulario frecuente), pero pierde términos raros y muy discriminativos. El efecto se ve en \textit{restricted}, cuyo vocabulario (\textit{sexy}, \textit{hypnosis}, Tabla~\ref{tab:terms}) es escaso: con solo texto, el recall de esta clase es 0.157 con LightGBM y SVD frente a 0.359 con regresión logística sobre el TF-IDF completo (Tabla~\ref{tab:modelos}). Al combinar texto y metadatos, la diferencia persiste (0.331 frente a 0.566).
+
+\textbf{Las dos fuentes de información son complementarias.} El ablation study y el análisis SHAP coinciden: el texto separa sobre todo el contenido infantil (\textit{suitable} y \textit{disturbing} comparten personajes, pero no el mismo vocabulario), mientras que las métricas de interacción separan \textit{restricted} e \textit{irrelevant}, que están en los extremos de la mediana de vistas (1,348,394 y 10,436, respectivamente; Tabla~\ref{tab:clase}). Agregar los metadatos a la regresión logística sube el F1 macro de 0.672 a 0.710 y el recall de \textit{restricted} de 0.359 a 0.566.
+
+\textbf{Los hiperparámetros importan menos que la representación.} El ajuste apenas cambió el F1 macro de la regresión logística (0.710 en ambos casos) y la mejor configuración de LightGBM fue la más regularizada. El límite del desempeño está en la información disponible y no en el ajuste fino. El F1 macro en prueba (0.725) es similar al de validación cruzada (0.710), lo que indica que la selección del modelo no sobreajustó las particiones.
+
+\textbf{Generalización fuera del ground truth.} La Sección~\ref{sec:consistencia} muestra la otra cara del resultado: el mismo peso de las métricas de interacción que ayuda a detectar \textit{restricted} en el ground truth produce muchas alertas en videos populares no infantiles. El modelo es fiable dentro de la distribución con la que se entrenó, pero no es directamente transferible a una plataforma abierta.
 
 \subsection{Limitaciones}\label{sec:limit2}
 Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1}), el diseño del proyecto tiene las siguientes:
 \begin{itemize}
 \item \textbf{Solo metadatos:} el modelo no observa el video ni el audio. Un video perturbador con título, descripción y tags inocuos es, por construcción, indetectable para este enfoque, y un creador malintencionado puede modificar su texto para evadirlo, como se describe en el fenómeno Elsagate~\cite{uscm}.
 \item \textbf{Vigencia temporal:} el 89.3\% de los videos del ground truth se publicó entre 2014 y 2018, y los más recientes son de 2019. Desde entonces cambiaron las tendencias de contenido infantil y la propia plataforma: por ejemplo, en noviembre de 2021 YouTube dejó de mostrar públicamente el número de dislikes~\cite{ytdislikes}, una de las variables del modelo, que podría no estar disponible para videos actuales.
+\item \textbf{Duración sin transformar:} a diferencia de los conteos, \texttt{duration\_seconds} entra al modelo solo estandarizada, sin $\log(1+x)$, y conserva 173 outliers (3.6\%, Tabla~\ref{tab:out}); en un modelo lineal, unos pocos videos muy largos pueden dominar su coeficiente. No se corrigió para no cambiar el modelo ya evaluado en prueba.
 \item \textbf{Métricas de interacción como fotografía:} vistas, likes y comentarios se midieron una sola vez y dependen de la antigüedad del video, por lo que un video reciente con pocas vistas no es comparable con uno de años de antigüedad.
 \item \textbf{Etiquetas y tamaño:} el ground truth tiene 4,797 videos y solo 419 de la clase \textit{restricted}; las etiquetas provienen de anotadores humanos y la frontera entre \textit{suitable} y \textit{disturbing} es en parte subjetiva.
 \item \textbf{Conjuntos adicionales sin etiquetas:} fuera del ground truth solo existe la predicción binaria del clasificador original, que no es una etiqueta verdadera; además, el corpus consolidado asigna un único conjunto de origen a cada video. Por eso las preguntas PI2 y PI3 se responden como comprobaciones de consistencia y no como medidas de eficacia.
@@ -818,13 +716,17 @@ Además de las limitaciones del análisis exploratorio (Sección~\ref{sec:limit1
 \item \textbf{Transparencia:} un sistema de apoyo a la moderación debe poder explicar sus decisiones. Por ello se priorizan representaciones interpretables (términos de TF-IDF, longitud del título, métricas de interacción) y se analiza la importancia de las características, de modo que un moderador pueda ver qué señales motivaron cada alerta.
 \item \textbf{Uso de los datos:} el dataset contiene solo metadatos públicos de los videos, sin información personal de los espectadores ni de menores. Se usa con fines académicos y citando a sus autores~\cite{papadamou,papadamou_data}, cuyo acceso en Zenodo es restringido.
 \end{itemize}
-% Pendiente para la versión final: ilustrar el costo asimétrico con 2-3 falsos
-% negativos reales en disturbing del análisis de errores de Mafer (Sección VI).
-% -> YA INCORPORADO en \ref{sec:etica} con ejemplos de la Sección VI.
 
 % =====================================================================
-% CONCLUSIONES  --  PENDIENTE (responder PI1-PI3)
+% CONCLUSIONES
 % =====================================================================
+\section{Conclusiones}\label{sec:conclusiones}
+\begin{itemize}
+\item \textbf{PI1 (H1 se cumple):} los metadatos permiten distinguir las cuatro clases con un desempeño muy superior al baseline. El modelo final alcanza un F1 macro de 0.725 en prueba, sobre canales no vistos, frente a 0.138 del modelo de clase mayoritaria en el mismo conjunto, y un AUC macro de 0.914. Sin embargo, la detección no es suficiente para un uso automático: el recall es de 0.714 en \textit{disturbing} y de 0.550 en \textit{restricted}, y los videos con títulos de apariencia infantil siguen siendo indetectables solo con el texto.
+\item \textbf{PI2 (H2 no se cumple):} en los videos nuevos de \texttt{elsagate\_related}, el modelo predice como inapropiados el 21.78\%, frente al 0.55\% del clasificador original, y la concordancia entre ambos no supera al azar (kappa $\approx 0$).
+\item \textbf{PI3 (H3 no se cumple):} en \texttt{other\_child\_related}, \texttt{random} y \texttt{popular}, la proporción de alertas (6.7\% a 12.0\%) es un orden de magnitud mayor que la del clasificador original, aunque se mantiene el orden de riesgo esperado (Elsagate primero, videos aleatorios al final).
+\end{itemize}
+Los principales aprendizajes son tres. Primero, el texto y las métricas de interacción son complementarios: el texto identifica el contenido infantil perturbador, y la interacción, el contenido restringido. Segundo, con muchos términos y pocos ejemplos, un modelo lineal sobre el TF-IDF completo supera a los modelos de árboles. Tercero, validar agrupando por canal y probar fuera del ground truth revela limitaciones que las métricas de prueba no muestran, en particular la sensibilidad al cambio de distribución. Por ello, el modelo es adecuado como herramienta para priorizar la revisión humana dentro de plataformas infantiles, no como filtro automático.
 
 % =====================================================================
 % TRABAJO FUTURO
@@ -834,8 +736,8 @@ Los resultados obtenidos sugieren las siguientes líneas de mejora:
 \begin{enumerate}
 \item \textbf{Incorporación de miniaturas (thumbnails):} el modelo actual no observa el contenido visual. Una CNN sobre las miniaturas podría detectar señales que el texto no puede capturar (personajes en situaciones perturbadoras, colores o composiciones atípicas), especialmente para los 55 falsos negativos de \textit{disturbing} con títulos genéricos.
 \item \textbf{Embeddings preentrenados:} sustituir TF-IDF por embeddings de modelos de lenguaje (BERT, multilingual) para capturar semántica contextual y manejar mejor el vocabulario infantil mezclado con contenido adulto, que es precisamente donde el modelo falla en \textit{restricted} (45\% de falsos negativos).
-\item \textbf{Actualización del dataset:} los datos son de 2014--2018 y YouTube retiró el contador público de dislikes en 2021~\cite{ytdislikes}. Un dataset más reciente permitiría evaluar la vigencia del modelo y reducir el sesgo temporal.
-\item \textbf{Pruebas en conjuntos adicionales:} aplicar el modelo final a \texttt{elsagate\_related}, \texttt{other\_child\_related}, \texttt{random\_videos} y \texttt{popular\_videos}, excluyendo los videos del ground truth, para responder PI2 y PI3 como comprobaciones de consistencia frente al clasificador original~\cite{papadamou}.
+\item \textbf{Actualización del dataset:} los datos son de 2014--2019 y YouTube retiró el contador público de dislikes en 2021~\cite{ytdislikes}. Un dataset más reciente permitiría evaluar la vigencia del modelo y reducir el sesgo temporal.
+\item \textbf{Recalibración ante el cambio de distribución:} la Sección~\ref{sec:consistencia} muestra que el modelo genera muchas más alertas fuera del ground truth, sobre todo en \textit{restricted}. Ampliar el entrenamiento con contenido general no infantil, ajustar los umbrales de decisión por clase o etiquetar a mano una muestra de los desacuerdos permitiría medir y reducir estos falsos positivos.
 \end{enumerate}
 
 % =====================================================================

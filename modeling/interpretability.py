@@ -88,24 +88,32 @@ def get_feature_names(model) -> list[str]:
 # SHAP
 # ---------------------------------------------------------------------------
 
-def compute_shap_values(model, X_sample: pd.DataFrame):
-    """Calcula SHAP values con LinearExplainer (ideal para LogReg)."""
+def compute_shap_values(model, X_sample: pd.DataFrame, X_background: pd.DataFrame):
+    """Calcula SHAP values con LinearExplainer (ideal para LogReg).
+
+    ``X_background`` (train) define el valor de referencia de cada feature;
+    ``X_sample`` (test) son los videos que se explican.
+    """
     print(f"  Calculando features transformadas para {len(X_sample)} muestras...")
     preprocessor = model.named_steps["features"]
     classifier = model.named_steps["model"]
 
     X_transformed = preprocessor.transform(X_sample)
+    # Con 'interventional' el fondo solo aporta la media de cada feature. Se pasa
+    # la media exacta de train como una sola fila: si se pasa la matriz completa,
+    # shap la submuestrea a 100 videos (max_samples=100).
+    background = np.asarray(preprocessor.transform(X_background).mean(axis=0)).reshape(1, -1)
 
     # LinearExplainer es exacto y rápido para modelos lineales.
     # Con datos dispersos (TF-IDF) solo funciona con 'interventional'.
     import scipy.sparse as sp
     is_sparse = sp.issparse(X_transformed)
     perturbation = "interventional" if is_sparse else "correlation_dependent"
-    print(f"  Datos {'dispersos' if is_sparse else 'densos'} → perturbation='{perturbation}'")
+    print(f"  Datos {'dispersos' if is_sparse else 'densos'} -> perturbation='{perturbation}'")
     print("  Inicializando LinearExplainer...")
     explainer = shap.LinearExplainer(
         classifier,
-        X_transformed,
+        background,
         feature_perturbation=perturbation,
     )
 
@@ -339,7 +347,8 @@ def build_report(
         "",
         "## Importancia de variables (SHAP)",
         "",
-        "Se usa `shap.LinearExplainer` (exacto para regresión logística).",
+        "Se usa `shap.LinearExplainer` (exacto para regresión logística), con train",
+        "como fondo de referencia y los 955 videos de test como muestras explicadas.",
         "Los valores SHAP miden la contribución marginal de cada feature a",
         "la predicción de cada clase (one-vs-rest).",
         "",
@@ -367,15 +376,15 @@ def build_report(
     lines += [
         "### Interpretación",
         "",
-        "- Las features de **texto** (TF-IDF de título y tags) dominan la importancia",
-        "  global, lo que es consistente con el ablation study: el texto solo da F1=0.625",
-        "  vs. F1=0.682 con texto+metadatos.",
-        "- Para `disturbing`, los términos de tags relacionados con personajes de",
-        "  dibujos animados en contextos violentos/sexuales tienen los SHAP más altos.",
-        "- Para `restricted`, los términos sexuales y de hipnosis en título/tags son",
-        "  determinantes, pero su baja frecuencia limita el recall (F1=0.524).",
-        "- Los metadatos de engagement (`likes_per_view`, `view_count_log1p`) tienen",
-        "  importancia SHAP moderada, pero ayudan especialmente en `irrelevant` vs `suitable`.",
+        "- De forma individual, las features más influyentes son los conteos de",
+        "  interacción (likes, vistas, dislikes, comentarios), la categoría y",
+        "  `licensed_content`; los primeros términos de texto (peppa, pig, elsa) aparecen",
+        "  más abajo en el ranking.",
+        "- La importancia del texto se reparte entre ~38 mil columnas TF-IDF. Sumada por",
+        "  bloque, el texto aporta el 65 % de la importancia en `disturbing` y el 55 % en",
+        "  `suitable`; en `restricted` e `irrelevant` pesan más los metadatos (~60 %).",
+        "- Es consistente con el ablation study: texto solo F1=0.625, metadatos solos",
+        "  F1=0.580, texto+metadatos F1=0.682 (LightGBM).",
         "",
         error_text,
         "",
@@ -431,8 +440,9 @@ def main() -> None:
     feature_names = get_feature_names(model)
     print(f"  Features totales: {len(feature_names)}")
 
-    # Para LinearExplainer usamos toda la muestra de test (es rápido)
-    explainer, shap_list, X_transformed = compute_shap_values(model, X_test)
+    # Se explican todos los videos de test; el fondo (referencia) es train,
+    # para que test no defina su propia línea base.
+    explainer, shap_list, X_transformed = compute_shap_values(model, X_test, X_train)
 
     n_features = X_transformed.shape[1]
     n_names = len(feature_names)
