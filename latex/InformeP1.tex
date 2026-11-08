@@ -171,68 +171,11 @@ El dataset utilizado proviene de Papadamou et al.~\cite{papadamou}, presentado e
 \item \texttt{dataset\_consolidado\_parts/}: 844,702 videos únicos, particionados en 10 archivos \texttt{.csv.gz}, que integran los conjuntos adicionales (\texttt{elsagate\_related}, ${\sim}$233K videos; \texttt{other\_child\_related}, ${\sim}$155K; \texttt{random\_videos}, ${\sim}$482K; y \texttt{popular\_videos}, ${\sim}$11K). Se utilizarán para comprobación de consistencia y predicciones con el modelo entrenado; no tienen etiquetas humanas, salvo los videos que también están en el ground truth.
 \item Archivos JSON crudos comprimidos: formato original de la API, previo a la conversión a CSV.
 \end{itemize}
-El \texttt{dataset\_groundtruth.csv} contiene 4,797 videos, sin duplicados (\texttt{video\_id} único), y 22 variables (Tabla~\ref{tab:vars}). El análisis se dividió en dos partes: un análisis completo del ground truth y un análisis breve de las primeras 1,000 líneas del primer archivo JSON de cada conjunto adicional (no de muestras aleatorias). Se utilizó Python con Pandas, Matplotlib y Seaborn en Jupyter Notebook.
+El \texttt{dataset\_groundtruth.csv} contiene 4,797 videos, sin duplicados (\texttt{video\_id} único), y 22 variables. El análisis se dividió en dos partes: un análisis completo del ground truth y un análisis breve de las primeras 1,000 líneas del primer archivo JSON de cada conjunto adicional (no de muestras aleatorias). Se utilizó Python con Pandas, Matplotlib y Seaborn en Jupyter Notebook.
 
 % ----- [LEO] -----
 \subsection{Variables y variable objetivo}\label{sec:target}
-La Tabla~\ref{tab:vars} describe las 22 variables del ground truth, junto con el número de valores faltantes de cada una.
-
-\begin{table*}[!t]
-\caption{Variables del dataset de ground truth (4,797 videos)}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|l|r|p{6.0cm}|}
-\hline
-\textbf{Variable} & \textbf{Tipo} & \textbf{Faltantes} & \textbf{Descripción} \\
-\hline
-\texttt{video\_id} & texto (identificador) & 0 & ID único del video \\
-\hline
-\texttt{title} & texto & 0 & Título del video \\
-\hline
-\texttt{description} & texto & 506 & Descripción del video \\
-\hline
-\texttt{channel\_id} & texto (identificador) & 0 & ID único del canal \\
-\hline
-\texttt{channel\_title} & texto & 0 & Nombre del canal \\
-\hline
-\texttt{published\_at} & fecha y hora (ISO 8601) & 0 & Fecha de publicación \\
-\hline
-\texttt{category\_id} & categórica (17 valores) & 0 & Categoría de YouTube \\
-\hline
-\texttt{tags} & texto (lista) & 883 & Etiquetas asociadas al video \\
-\hline
-\texttt{duration\_iso} & texto (ISO 8601, p. ej. PT2M30S) & 1 & Duración en el formato original \\
-\hline
-\texttt{duration\_seconds} & numérica & 1 & Duración en segundos \\
-\hline
-\texttt{definition} & categórica (hd/sd) & 1 & Calidad del video (78.1\% hd, 21.8\% sd) \\
-\hline
-\texttt{caption} & booleana & 1 & Si el video tiene subtítulos \\
-\hline
-\texttt{licensed\_content} & booleana & 1 & Si el contenido tiene licencia comercial \\
-\hline
-\texttt{view\_count} & numérica & 3 & Número de visualizaciones \\
-\hline
-\texttt{like\_count} & numérica & 128 & Número de likes \\
-\hline
-\texttt{dislike\_count} & numérica & 128 & Número de dislikes \\
-\hline
-\texttt{comment\_count} & numérica & 228 & Número de comentarios \\
-\hline
-\texttt{favorite\_count} & numérica & 0 & Número de favoritos (YouTube ya no lo usa desde 2015) \\
-\hline
-\texttt{classification\_label} & categórica (4 clases) & 0 & \textbf{Variable objetivo} \\
-\hline
-\texttt{prediction} & categórica & 4,797 (100\%) & Predicción del clasificador original de los autores \\
-\hline
-\texttt{is\_ground\_truth} & booleana (constante = 1) & 0 & Confirma que el registro proviene de anotación manual \\
-\hline
-\texttt{source\_dataset} & categórica (constante = ``groundtruth'') & 0 & Origen del registro \\
-\hline
-\end{tabular}
-\label{tab:vars}
-\end{center}
-\end{table*}
+Las 22 variables se agrupan en: identificadores (\texttt{video\_id}, \texttt{channel\_id}, \texttt{channel\_title}); texto (\texttt{title}, \texttt{description}, \texttt{tags}); fecha de publicación; duración (\texttt{duration\_seconds} y su versión ISO 8601); categóricas (\texttt{category\_id} con 17 valores, \texttt{definition}, \texttt{caption}, \texttt{licensed\_content}); métricas de interacción (\texttt{view\_count}, \texttt{like\_count}, \texttt{dislike\_count}, \texttt{comment\_count} y \texttt{favorite\_count}, siempre 0); la variable objetivo \texttt{classification\_label}; y tres columnas de control (\texttt{prediction}, vacía en el ground truth, \texttt{is\_ground\_truth} y \texttt{source\_dataset}, ambas constantes).
 
 La variable objetivo es \texttt{classification\_label}, que asigna a cada video una de cuatro clases, definidas por los autores del dataset según el tipo de contenido y su público objetivo:
 \begin{itemize}
@@ -245,7 +188,7 @@ Esta clasificación no equivale directamente a una escala binaria ``apto/no apto
 
 % ----- [ADRIÁN] -----
 \subsection{Distribución de clases y desbalance}\label{sec:clases}
-El ground truth contiene 4,797 videos distribuidos en cuatro clases (Fig.~\ref{fig:clases}). Para cuantificar el desbalance se calculó el ratio de desbalance (IR) de cada clase respecto a la clase mayoritaria (\textit{irrelevant}):
+El ground truth contiene 4,797 videos distribuidos en cuatro clases. Para cuantificar el desbalance se calculó el ratio de desbalance (IR) de cada clase respecto a la clase mayoritaria (\textit{irrelevant}):
 \begin{equation}
 \mathrm{IR}_c=\frac{n_{\text{máx}}}{n_c}\label{eq:ir}
 \end{equation}
@@ -273,97 +216,47 @@ Restricted & 419 & 8.7 & $4.62\times$ \\
 \end{center}
 \end{table}
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_clases_groundtruth.png}
-\caption{Distribución de clases en el ground truth (número de videos y porcentaje).}
-\label{fig:clases}
-\end{figure}
-
 La clase mayoritaria es \textit{irrelevant} (40.4\%), seguida de \textit{suitable} (31.5\%). Las clases de interés para la detección (\textit{disturbing} y \textit{restricted}) representan el 28.1\% del dataset, y \textit{restricted} es 4.6 veces más pequeña que la clase mayoritaria. Este nivel de desbalance deberá considerarse en el entrenamiento del modelo.
 
 % ----- [ADRIÁN] -----
 \subsection{Valores faltantes y calidad de los datos}\label{sec:faltantes}
-La Fig.~\ref{fig:faltantes} muestra los valores faltantes por variable. \texttt{tags} es la más afectada (883 videos, 18.4\%), seguida de \texttt{description} (506, 10.5\%), \texttt{comment\_count} (228, 4.8\%), y \texttt{like\_count} y \texttt{dislike\_count} (128 cada una, 2.7\%). \texttt{view\_count} tiene 3 valores faltantes, y \texttt{duration\_seconds} y \texttt{definition} tienen 1 cada una. \texttt{title} y \texttt{category\_id} no presentan valores faltantes. La columna \texttt{prediction} está vacía en todo el ground truth (Sección~\ref{sec:leak}). Los conteos de datos válidos por variable numérica se muestran en la Tabla~\ref{tab:desc}. Además, 11 videos tienen 0 vistas y 10 tienen duración igual a 0, lo que exigirá tratar la división por cero al construir razones de interacción en el preprocesamiento. No se encontraron videos duplicados (mismo \texttt{video\_id}): los 4,797 registros son únicos.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/valores_faltantes_groundtruth.png}
-\caption{Porcentaje de valores faltantes por variable en el ground truth, con el número de videos entre paréntesis (se omite \texttt{prediction}, vacía en el 100\% de los registros).}
-\label{fig:faltantes}
-\end{figure}
+Respecto a los valores faltantes, \texttt{tags} es la más afectada (883 videos, 18.4\%), seguida de \texttt{description} (506, 10.5\%), \texttt{comment\_count} (228, 4.8\%), y \texttt{like\_count} y \texttt{dislike\_count} (128 cada una, 2.7\%). \texttt{view\_count} tiene 3 valores faltantes, y \texttt{duration\_seconds} y \texttt{definition} tienen 1 cada una. \texttt{title} y \texttt{category\_id} no presentan valores faltantes. La columna \texttt{prediction} está vacía en todo el ground truth (Sección~\ref{sec:leak}). Además, 11 videos tienen 0 vistas y 10 tienen duración igual a 0, lo que exigirá tratar la división por cero al construir razones de interacción en el preprocesamiento. No se encontraron videos duplicados (mismo \texttt{video\_id}): los 4,797 registros son únicos.
 
 % ----- [MAFER] -----
 \subsection{Estadísticas descriptivas}
-La Tabla~\ref{tab:desc} resume las variables numéricas del ground truth. Las métricas de interacción presentan alta variabilidad: por ejemplo, la media de \texttt{view\_count} (6,142,716.96) es muy superior a su mediana (90,093.5). La duración promedio es de 752.06 s (12.5 min), mientras que la mediana es de 345.5 s (5.8 min). Los máximos muestran outliers significativos, sobre todo en visualizaciones y duración (Sección~\ref{sec:outliers}).
-
-\begin{table*}[!t]
-\caption{Estadísticas descriptivas de las variables numéricas del ground truth}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|r|r|r|r|r|r|r|r|}
-\hline
-\textbf{Variable} & \textbf{Válidos} & \textbf{Media} & \textbf{Desv. est.} & \textbf{Mín.} & \textbf{P25} & \textbf{Mediana} & \textbf{P75} & \textbf{Máx.} \\
-\hline
-\texttt{view\_count} & 4,794 & 6,142,716.96 & 43,836,538.05 & 0 & 1,140 & 90,093.50 & 1,775,452.75 & 1,664,660,083 \\
-\hline
-\texttt{like\_count} & 4,669 & 26,878.13 & 155,478.81 & 0 & 10 & 502.00 & 10,122 & 4,392,637 \\
-\hline
-\texttt{dislike\_count} & 4,669 & 3,718.92 & 25,425.08 & 0 & 1 & 53.00 & 1,097 & 1,071,513 \\
-\hline
-\texttt{comment\_count} & 4,569 & 2,378.41 & 12,849.85 & 0 & 1 & 49.00 & 763 & 323,267 \\
-\hline
-\texttt{duration\_seconds} & 4,796 & 752.06 & 1,986.99 & 0 & 167 & 345.50 & 706.25 & 39,433 \\
-\hline
-\end{tabular}
-\label{tab:desc}
-\end{center}
-\end{table*}
+Las métricas de interacción del ground truth presentan una asimetría muy fuerte: la media de \texttt{view\_count} (6,142,716.96) es muy superior a su mediana (90,093.5) y su máximo supera los 1,664 millones; lo mismo ocurre con likes (media 26,878, mediana 502), dislikes (3,719 y 53) y comentarios (2,378 y 49). La duración promedio es de 752.06 s (12.5 min), mientras que la mediana es de 345.5 s (5.8 min). Los máximos muestran outliers significativos, sobre todo en visualizaciones y duración (Sección~\ref{sec:outliers}).
 
 % ----- [MAFER] -----
 \subsection{Análisis por clase}
-La Tabla~\ref{tab:clase} compara las variables numéricas y de título entre clases. \textit{Suitable} presenta la mayor media de vistas (10,761,959.60), mientras que \textit{restricted} presenta la mayor mediana de vistas y la mayor media de comentarios. Las medias están fuertemente afectadas por outliers, por lo que las medianas ofrecen una comparación más robusta (Fig.~\ref{fig:eng_vl}). Por ello, no es correcto atribuir el mayor nivel de interacción a la clase \textit{disturbing}.
+La Tabla~\ref{tab:clase} compara las variables numéricas y de título entre clases. \textit{Suitable} presenta la mayor media de vistas (10,761,959.60), mientras que \textit{restricted} presenta la mayor mediana de vistas y la mayor media de comentarios. Las medias están fuertemente afectadas por outliers, por lo que las medianas ofrecen una comparación más robusta. Por ello, no es correcto atribuir el mayor nivel de interacción a la clase \textit{disturbing}.
 
-\begin{table*}[!t]
+\begin{table}[!t]
 \caption{Estadísticas por clase}
 \begin{center}
 \footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{|l|r|r|r|r|}
 \hline
-\textbf{Medida} & \textbf{Disturbing} & \textbf{Irrelevant} & \textbf{Restricted} & \textbf{Suitable} \\
+\textbf{Medida} & \textbf{Dist.} & \textbf{Irrel.} & \textbf{Restr.} & \textbf{Suit.} \\
 \hline
 Vistas (mediana) & 39,144 & 10,436 & 1,348,394 & 407,330 \\
 \hline
 Likes (mediana) & 202 & 87 & 5,130 & 1,342 \\
 \hline
-Comentarios (mediana) & 27 & 14 & 531 & 69.5 \\
+Coment. (mediana) & 27 & 14 & 531 & 69.5 \\
 \hline
-Duración, s (mediana) & 359 & 264 & 350 & 443.5 \\
+Duración s (med.) & 359 & 264 & 350 & 443.5 \\
 \hline
-Título, caracteres (media) & 58.98 & 46.80 & 44.79 & 61.88 \\
+Título, caract. (media) & 58.98 & 46.80 & 44.79 & 61.88 \\
 \hline
-Título, palabras (media) & 10.04 & 8.12 & 7.79 & 10.91 \\
+Título, palabras & 10.04 & 8.12 & 7.79 & 10.91 \\
 \hline
 \end{tabular}
 \label{tab:clase}
 \end{center}
-\end{table*}
+\end{table}
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_engagement_vistas_likes_groundtruth.png}
-\caption{Vistas y likes por clase (diagramas de caja en escala logarítmica simétrica, lineal cerca de cero para representar los videos con valor 0).}
-\label{fig:eng_vl}
-\end{figure}
-
-\textit{Duración.} \textit{Suitable} tiene la mayor duración media (872.00 s) y mediana (443.5 s). Las medianas se sitúan entre 264 y 443.5 s (4.4 a 7.4 min), y la variabilidad es especialmente alta en \textit{irrelevant} y \textit{suitable} por la presencia de videos muy largos (Fig.~\ref{fig:dur_box}).
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{images/distrib_duracion_box_groundtruth.png}
-\caption{Duración por clase (diagrama de caja, escala logarítmica). Se excluyen los 10 videos con duración 0.}
-\label{fig:dur_box}
-\end{figure}
+\textit{Duración.} \textit{Suitable} tiene la mayor duración media (872.00 s) y mediana (443.5 s). Las medianas se sitúan entre 264 y 443.5 s (4.4 a 7.4 min), y la variabilidad es especialmente alta en \textit{irrelevant} y \textit{suitable} por la presencia de videos muy largos.
 
 \textit{Categorías y definición.} El dataset abarca 17 categorías de YouTube (Fig.~\ref{fig:categ}; los nombres provienen de la YouTube Data API~\cite{ytapi}). Las tres más frecuentes son \textit{Entertainment}, \textit{People \& Blogs} y \textit{Film \& Animation}, y algunas categorías predominan en ciertas clases. Respecto a la calidad, 3,748 videos (78.1\%) están en HD y 1,048 (21.8\%) en SD. La asociación entre la definición y la clase es estadísticamente significativa ($\chi^2=23.30$, $p=3.5\times10^{-5}$), pero muy débil ($V$ de Cramér $=0.07$), por lo que la calidad del video no parece estar directamente relacionada con la clasificación de contenido.
 
@@ -414,7 +307,7 @@ for kids & 136 & 12.5 & 4.4 & 2.9 & 80.1 \\
 
 % ----- [ADRIÁN] -----
 \subsection{Detección de outliers}\label{sec:outliers}
-Se aplicó el método del rango intercuartílico (IQR) sobre las cinco variables numéricas, tanto en su escala original como sobre una transformación logarítmica $\log(1+x)$ (Tabla~\ref{tab:out}, Fig.~\ref{fig:box}). Esta segunda versión es necesaria porque, dada la fuerte asimetría de las métricas de interacción, el IQR en escala original marca como outlier a una fracción muy grande de las observaciones (entre 15.6\% y 16.9\%), lo cual no es informativo.
+Se aplicó el método del rango intercuartílico (IQR) sobre las cinco variables numéricas, tanto en su escala original como sobre una transformación logarítmica $\log(1+x)$ (Tabla~\ref{tab:out}). Esta segunda versión es necesaria porque, dada la fuerte asimetría de las métricas de interacción, el IQR en escala original marca como outlier a una fracción muy grande de las observaciones (entre 15.6\% y 16.9\%), lo cual no es informativo.
 
 En escala logarítmica, el número de outliers en las cuatro variables de interacción desciende a 0, lo que muestra que las observaciones siguen una distribución log-normal coherente y que no constituyen errores ni datos anómalos. Únicamente \texttt{duration\_seconds} retiene 173 outliers (3.61\%), correspondientes a videos notablemente cortos o largos. Al cruzar los valores extremos de vistas ($>$4.4M) y likes ($>$25.3K) con la clase, se observa que están repartidos entre todas las clases (en vistas: 379 \textit{suitable}, 175 \textit{irrelevant}, 132 \textit{restricted} y 116 \textit{disturbing}). Por ello, corresponden a contenido popular legítimo dentro de cada categoría y no deben descartarse, sino transformarse mediante $\log(1+x)$ en la etapa 2.
 
@@ -443,13 +336,6 @@ En escala logarítmica, el número de outliers en las cuatro variables de intera
 \end{center}
 \end{table}
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{images/outliers_boxplots_groundtruth.png}
-\caption{Diagramas de caja de las variables numéricas en escala original (arriba) y logarítmica $\log(1+x)$ (abajo).}
-\label{fig:box}
-\end{figure*}
-
 % ----- [ADRIÁN] -----
 \subsection{Relaciones entre variables}\label{sec:corr}
 Se analizó la correlación entre las variables numéricas (Pearson en escala original y logarítmica, y Spearman) para identificar redundancia y posibles problemas de multicolinealidad (la Fig.~\ref{fig:corr_spearman} muestra la matriz de Spearman). Las métricas de interacción presentan una correlación excepcionalmente alta entre sí: \texttt{view\_count} y \texttt{dislike\_count} (Spearman 0.966, Pearson log 0.940), \texttt{view\_count} y \texttt{like\_count} (Spearman 0.956, Pearson log 0.955), y \texttt{like\_count} y \texttt{comment\_count} (Spearman 0.948, Pearson log 0.947). Esta colinealidad casi unitaria desaconseja emplear los cuatro conteos como variables directas simultáneas; en su lugar, se deben formular razones normalizadas (likes/vistas, comentarios/vistas). Por su parte, \texttt{duration\_seconds} mantiene correlaciones bajas con las variables de interacción (Pearson log entre 0.228 y 0.241, Spearman entre 0.217 y 0.225), por lo que provee una señal complementaria e independiente.
@@ -461,61 +347,11 @@ Se analizó la correlación entre las variables numéricas (Pearson en escala or
 \label{fig:corr_spearman}
 \end{figure}
 
-Adicionalmente, se aplicó la prueba de Kruskal-Wallis para evaluar si la distribución de cada variable numérica difiere de forma estadísticamente significativa entre las cuatro clases (Tabla~\ref{tab:kw}). Las cinco variables resultaron significativas ($p<0.05$; de hecho, todas con $p<10^{-27}$). No obstante, dado el tamaño muestral (${\sim}$4,800 observaciones), diferencias distributivas pequeñas pueden alcanzar significancia con facilidad; por ello, este resultado funciona como un filtro preliminar positivo (ninguna variable se descarta a priori), y su capacidad predictiva deberá confirmarse en la etapa 2 mediante métricas de importancia de características con los modelos entrenados.
-
-\begin{table}[!t]
-\caption{Prueba de Kruskal-Wallis: variable numérica vs. clase}
-\begin{center}
-\footnotesize
-\begin{tabular}{|l|r|r|}
-\hline
-\textbf{Variable} & \textbf{Estadístico $H$} & \textbf{$p$-valor} \\
-\hline
-\texttt{view\_count} & 523.87 & $3.20\times10^{-113}$ \\
-\hline
-\texttt{like\_count} & 232.61 & $3.76\times10^{-50}$ \\
-\hline
-\texttt{dislike\_count} & 399.39 & $3.00\times10^{-86}$ \\
-\hline
-\texttt{comment\_count} & 150.65 & $1.91\times10^{-32}$ \\
-\hline
-\texttt{duration\_seconds} & 129.94 & $5.57\times10^{-28}$ \\
-\hline
-\end{tabular}
-\label{tab:kw}
-\end{center}
-\end{table}
+Adicionalmente, se aplicó la prueba de Kruskal-Wallis para evaluar si la distribución de cada variable numérica difiere de forma estadísticamente significativa entre las cuatro clases. Las cinco variables resultaron significativas, todas con $p<10^{-27}$ (desde $H=129.9$ en \texttt{duration\_seconds} hasta $H=523.9$ en \texttt{view\_count}). No obstante, dado el tamaño muestral (${\sim}$4,800 observaciones), diferencias distributivas pequeñas pueden alcanzar significancia con facilidad; por ello, este resultado funciona como un filtro preliminar positivo (ninguna variable se descarta a priori), y su capacidad predictiva deberá confirmarse en la etapa 2 mediante métricas de importancia de características con los modelos entrenados.
 
 % ----- [MAFER] -----
 \subsection{Conjuntos adicionales}\label{sec:adic}
-Se analizaron las primeras 1,000 líneas del primer archivo de cada conjunto adicional. No son muestras aleatorias y en ellas predominan videos que también están en el ground truth (780 en \texttt{elsagate\_related}, 70 en \texttt{other\_child\_related}, 34 en \texttt{random\_videos} y 490 en \texttt{popular\_videos}), por lo que los porcentajes de videos predichos como inapropiados no representan la prevalencia en los conjuntos completos. Como muestra la Tabla~\ref{tab:add}, casi todos los videos predichos como inapropiados pertenecen al ground truth: en \texttt{elsagate\_related}, 472 de los 780 videos del ground truth (60.5\%) fueron predichos como inapropiados, frente a 1 de los 220 restantes (0.5\%); en los otros tres conjuntos, ningún video fuera del ground truth fue predicho como inapropiado. Fuera del ground truth solo existe la predicción automática del clasificador, sin etiquetas humanas.
-
-Para no depender de estas primeras líneas, se revisó también el corpus consolidado completo (844,702 videos únicos), en el que cada video del ground truth aparece una sola vez y queda separado de los conjuntos adicionales. Fuera del ground truth, el clasificador original predijo como inapropiados 1,260 de 230,873 videos de \texttt{elsagate\_related} (0.55\%), 586 de 137,043 de \texttt{other\_child\_related} (0.43\%), 3,388 de 462,382 de \texttt{random\_videos} (0.73\%) y ninguno de los 9,607 de \texttt{popular\_videos}. Por tanto, la ausencia de videos inapropiados fuera del ground truth en la Tabla~\ref{tab:add} es un efecto de la muestra analizada y no se mantiene en los conjuntos completos. Como el consolidado asigna un único conjunto de origen a cada video, un video presente en varios conjuntos se cuenta solo en uno.
-
-\begin{table}[!t]
-\caption{Videos predichos como inapropiados en las primeras 1,000 líneas de cada conjunto adicional$^{\mathrm{a}}$}
-\begin{center}
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{|l|r|r|r|r|}
-\hline
- & \multicolumn{2}{c|}{\textbf{Videos}} & \multicolumn{2}{c|}{\textbf{Inapropiados}} \\
-\cline{2-5}
-\textbf{Conjunto} & \textbf{En GT} & \textbf{Fuera} & \textbf{En GT} & \textbf{Fuera} \\
-\hline
-Elsagate & 780 & 220 & 472 (60.5\%) & 1 (0.5\%) \\
-\hline
-Other child & 70 & 930 & 15 (21.4\%) & 0 (0.0\%) \\
-\hline
-Random & 34 & 966 & 3 (8.8\%) & 0 (0.0\%) \\
-\hline
-Popular & 490 & 510 & 27 (5.5\%) & 0 (0.0\%) \\
-\hline
-\multicolumn{5}{l}{\scriptsize $^{\mathrm{a}}$GT: ground truth. Predicción automática del clasificador.}
-\end{tabular}
-\label{tab:add}
-\end{center}
-\end{table}
+Un primer análisis de las 1,000 primeras líneas de cada conjunto mostró que en ellas predominan videos del ground truth (78.0\% en \texttt{elsagate\_related} y 49.0\% en \texttt{popular\_videos}), por lo que se revisó el corpus consolidado completo (844,702 videos únicos), en el que cada video del ground truth aparece una sola vez y queda separado de los conjuntos adicionales. Fuera del ground truth, el clasificador original predijo como inapropiados 1,260 de 230,873 videos de \texttt{elsagate\_related} (0.55\%), 586 de 137,043 de \texttt{other\_child\_related} (0.43\%), 3,388 de 462,382 de \texttt{random\_videos} (0.73\%) y ninguno de los 9,607 de \texttt{popular\_videos}. Como el consolidado asigna un único conjunto de origen a cada video, un video presente en varios conjuntos se cuenta solo en uno.
 
 % ----- [ADRIÁN] -----
 \subsection{Posible fuga de datos (data leakage)}\label{sec:leak}
@@ -523,7 +359,7 @@ Se revisaron cuatro fuentes potenciales de fuga de datos relevantes para el dise
 \begin{enumerate}
 \item \textbf{Columnas que codifican la etiqueta o la predicción original.} \texttt{prediction} e \texttt{is\_ground\_truth} son generadas por el clasificador automático de los autores del dataset y por el proceso de anotación, respectivamente. No son información disponible de forma independiente para un video nuevo, por lo que no deben usarse como características. En el ground truth, \texttt{prediction} contiene 100\% de valores nulos (4,797 registros) e \texttt{is\_ground\_truth} toma el valor constante 1.
 \item \textbf{Duplicados dentro del ground truth.} Se constató que existen 0 videos duplicados (mismo \texttt{video\_id}); los 4,797 registros son videos únicos. De existir duplicados, un mismo video repetido en entrenamiento y validación inflaría artificialmente el desempeño.
-\item \textbf{Solapamiento entre ground truth y conjuntos adicionales.} Como el ground truth se usa para entrenar y los conjuntos adicionales para comprobación de consistencia, un video presente en ambos dejaría de ser una prueba genuina de generalización. La Tabla~\ref{tab:add} muestra los videos en común (sobre las 1,000 líneas analizadas): 780 (78.0\%) en \texttt{elsagate\_related}, 70 (7.0\%) en \texttt{other\_child\_related}, 34 (3.4\%) en \texttt{random\_videos} y 490 (49.0\%) en \texttt{popular\_videos}. Estos videos deberán excluirse de la comprobación.
+\item \textbf{Solapamiento entre ground truth y conjuntos adicionales.} Como el ground truth se usa para entrenar y los conjuntos adicionales para comprobación de consistencia, un video presente en ambos dejaría de ser una prueba genuina de generalización. En las 1,000 primeras líneas analizadas, los videos en común son 780 (78.0\%) en \texttt{elsagate\_related}, 70 (7.0\%) en \texttt{other\_child\_related}, 34 (3.4\%) en \texttt{random\_videos} y 490 (49.0\%) en \texttt{popular\_videos}. Estos videos deberán excluirse de la comprobación.
 \item \textbf{Concentración de videos por canal.} El ground truth contiene 3,818 canales únicos (por \texttt{channel\_id}), de los cuales 418 tienen más de un video (máximo de 33 videos para un canal). Entre los 13 canales con 12 o más videos (seis empatan con exactamente 12), 11 concentran el 100\% en \textit{suitable}, uno tiene el 91.7\% en \textit{suitable} (11 \textit{suitable} y 1 \textit{disturbing}) y solo uno (33 videos) presenta mezcla de clases (20 \textit{disturbing} y 13 \textit{suitable}). Esto implica riesgo de que el modelo memorice características propias del canal, y de fuga de datos si videos del mismo canal quedan repartidos entre entrenamiento y validación o prueba. Se recomienda una partición agrupada por canal (por ejemplo, \texttt{StratifiedGroupKFold}, tanto para el conjunto de prueba como para la validación cruzada) además de la estratificación por clase.
 \end{enumerate}
 
@@ -542,7 +378,7 @@ Antes de transformar los datos se reservó el conjunto de prueba con \texttt{Str
 
 \subsection{Transformaciones aplicadas}
 \begin{itemize}
-\item \textbf{Valores faltantes numéricos:} \texttt{like\_count}, \texttt{dislike\_count} (128), \texttt{comment\_count} (228), \texttt{view\_count} (3) y \texttt{duration\_seconds} (1) se imputan con la mediana de entrenamiento, robusta frente a la fuerte asimetría observada (Tabla~\ref{tab:desc}).
+\item \textbf{Valores faltantes numéricos:} \texttt{like\_count}, \texttt{dislike\_count} (128), \texttt{comment\_count} (228), \texttt{view\_count} (3) y \texttt{duration\_seconds} (1) se imputan con la mediana de entrenamiento, robusta frente a la fuerte asimetría observada (Sección~\ref{sec:outliers}).
 \item \textbf{Valores faltantes categóricos:} \texttt{definition}, \texttt{caption} y \texttt{licensed\_content} (1 faltante cada una) se imputan con la moda de entrenamiento.
 \item \textbf{Texto faltante:} la ausencia de descripción (506) o de tags (883) se representa como texto vacío, sin inventar contenido. Los tags se normalizan a minúsculas y se separan por \texttt{|}, como en el análisis de la Sección~\ref{sec:target}.
 \item \textbf{Transformación logarítmica:} los cuatro conteos de interacción se transforman con $\log(1+x)$, que elimina los outliers detectados por el IQR (Tabla~\ref{tab:out}) sin descartar videos.
@@ -758,21 +594,21 @@ La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas P
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/roc_curves.png}
+\includegraphics[width=0.85\columnwidth]{images/roc_curves.png}
 \caption{Curvas ROC one-vs-rest. AUC macro = 0.914.}
 \label{fig:roc}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/pr_curves.png}
+\includegraphics[width=0.85\columnwidth]{images/pr_curves.png}
 \caption{Curvas Precision-Recall. AP macro = 0.772. La clase \textit{restricted} muestra la mayor caída por su bajo soporte (80 videos en test).}
 \label{fig:pr}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/confusion_matrix.png}
+\includegraphics[width=0.85\columnwidth]{images/confusion_matrix.png}
 \caption{Matriz de confusión sobre el conjunto de prueba: conteos absolutos (izquierda) y normalizada por fila (derecha).}
 \label{fig:cm}
 \end{figure}
@@ -782,7 +618,7 @@ Se calcularon valores SHAP~\cite{shap} con \texttt{LinearExplainer} (exacto para
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/shap_summary.png}
+\includegraphics[width=0.85\columnwidth]{images/shap_summary.png}
 \caption{Importancia SHAP global (top 20 features, media $|\text{SHAP}|$ sobre todas las clases).}
 \label{fig:shap}
 \end{figure}
