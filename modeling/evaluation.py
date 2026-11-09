@@ -188,21 +188,23 @@ def plot_pr_curves(y_true: pd.Series, y_proba: np.ndarray, classes: list[str]) -
 def plot_confusion_matrix(y_true: pd.Series, y_pred: np.ndarray, classes: list[str]) -> plt.Figure:
     """Matriz de confusión normalizada por fila (recall por celda)."""
     cm = confusion_matrix(y_true, y_pred, labels=classes)
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-
-    # Absoluta
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-    disp.plot(ax=axes[0], colorbar=False, cmap="Blues")
-    axes[0].set_title("Matriz de confusión (conteos)", fontsize=12, fontweight="bold")
-    axes[0].tick_params(axis="x", rotation=30)
-
-    # Normalizada por fila
     cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
-    disp_norm = ConfusionMatrixDisplay(confusion_matrix=cm_norm, display_labels=classes)
-    disp_norm.plot(ax=axes[1], colorbar=False, cmap="Blues", values_format=".2f")
-    axes[1].set_title("Matriz de confusión (normalizada por fila)", fontsize=12, fontweight="bold")
-    axes[1].tick_params(axis="x", rotation=30)
 
+    # Una sola matriz normalizada, con el conteo absoluto entre paréntesis.
+    # Tamaño pensado para el ancho de una columna IEEE (~3.5 in).
+    fig, ax = plt.subplots(figsize=(2.9, 2.6))
+    ax.imshow(cm_norm, cmap="Blues", vmin=0, vmax=1)
+    for i in range(len(classes)):
+        for j in range(len(classes)):
+            color = "white" if cm_norm[i, j] > 0.5 else "black"
+            ax.text(j, i, f"{cm_norm[i, j]:.2f}\n({cm[i, j]})",
+                    ha="center", va="center", fontsize=7.5, color=color)
+    ax.set_xticks(range(len(classes)))
+    ax.set_yticks(range(len(classes)))
+    ax.set_xticklabels(classes, fontsize=7.5, rotation=25, ha="right")
+    ax.set_yticklabels(classes, fontsize=7.5)
+    ax.set_xlabel("Clase predicha", fontsize=8)
+    ax.set_ylabel("Clase real", fontsize=8)
     fig.tight_layout()
     return fig
 

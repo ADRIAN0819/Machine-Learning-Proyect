@@ -147,12 +147,13 @@ def plot_shap_summary(shap_list, X_transformed, feature_names, classes, top_n=TO
     top_names = [feature_names[i] for i in top_idx]
     top_vals = importance[top_idx]
 
-    fig, ax = plt.subplots(figsize=(9, max(5, top_n * 0.38)))
-    bars = ax.barh(range(top_n), top_vals[::-1], color="#5b8dd9", edgecolor="white")
+    # Tamaño pensado para el ancho de una columna IEEE (~3.5 in), fuente legible.
+    fig, ax = plt.subplots(figsize=(3.4, max(2.5, top_n * 0.15)))
+    ax.barh(range(top_n), top_vals[::-1], color="#5b8dd9", edgecolor="white")
     ax.set_yticks(range(top_n))
-    ax.set_yticklabels(top_names[::-1], fontsize=9)
-    ax.set_xlabel("Importancia media |SHAP|", fontsize=11)
-    ax.set_title(f"Top {top_n} features por importancia SHAP global", fontsize=12, fontweight="bold")
+    ax.set_yticklabels(top_names[::-1], fontsize=7)
+    ax.tick_params(axis="x", labelsize=7.5)
+    ax.set_xlabel("Importancia media |SHAP|", fontsize=8.5)
     ax.grid(axis="x", alpha=0.3)
     fig.tight_layout()
     return fig
