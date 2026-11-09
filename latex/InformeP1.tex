@@ -209,6 +209,13 @@ La clase mayoritaria es \textit{irrelevant} (40.4\%), seguida de \textit{suitabl
 \subsection{Valores faltantes y calidad de los datos}\label{sec:faltantes}
 Respecto a los valores faltantes, \texttt{tags} es la más afectada (883 videos, 18.4\%), seguida de \texttt{description} (506, 10.5\%), \texttt{comment\_count} (228, 4.8\%), y \texttt{like\_count} y \texttt{dislike\_count} (128 cada una, 2.7\%). \texttt{view\_count} tiene 3 valores faltantes, y \texttt{duration\_seconds} y \texttt{definition} tienen 1 cada una. \texttt{title} y \texttt{category\_id} no presentan valores faltantes. La columna \texttt{prediction} está vacía en todo el ground truth (Sección~\ref{sec:leak}). Además, 11 videos tienen 0 vistas y 10 tienen duración igual a 0, lo que obliga a tratar la división por cero al construir razones de interacción (Sección~\ref{sec:prep}). No se encontraron videos duplicados (mismo \texttt{video\_id}): los 4,797 registros son únicos.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/valores_faltantes_groundtruth.png}
+\caption{Porcentaje de valores faltantes por variable en el ground truth (se omite \texttt{prediction}, vacía al 100\%).}
+\label{fig:faltantes}
+\end{figure}
+
 % ----- [MAFER] -----
 \subsection{Estadísticas descriptivas}
 Las métricas de interacción del ground truth presentan una asimetría muy fuerte: la media de \texttt{view\_count} (6,142,716.96) es muy superior a su mediana (90,093.5) y su máximo supera los 1,664 millones; lo mismo ocurre con likes (media 26,878, mediana 502), dislikes (3,719 y 53) y comentarios (2,378 y 49). La duración promedio es de 752.06 s (12.5 min), mientras que la mediana es de 345.5 s (5.8 min). Los máximos muestran outliers significativos, sobre todo en visualizaciones y duración (Sección~\ref{sec:outliers}).
@@ -245,6 +252,13 @@ Título, palabras & 10.04 & 8.12 & 7.79 & 10.91 \\
 
 \textit{Duración.} \textit{Suitable} tiene la mayor duración media (872.00 s) y mediana (443.5 s). Las medianas se sitúan entre 264 y 443.5 s (4.4 a 7.4 min), y la variabilidad es especialmente alta en \textit{irrelevant} y \textit{suitable} por la presencia de videos muy largos.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/distrib_engagement_vistas_likes_groundtruth.png}
+\caption{Vistas y likes por clase (escala logarítmica). \textit{Restricted} tiene las medianas más altas; \textit{irrelevant}, las más bajas.}
+\label{fig:eng_vl}
+\end{figure}
+
 \textit{Categorías y definición.} El dataset abarca 17 categorías de YouTube (Fig.~\ref{fig:categ}; los nombres provienen de la YouTube Data API~\cite{ytapi}). Las tres más frecuentes son \textit{Entertainment}, \textit{People \& Blogs} y \textit{Film \& Animation}, y algunas categorías predominan en ciertas clases. Respecto a la calidad, 3,748 videos (78.1\%) están en HD y 1,048 (21.8\%) en SD. La asociación entre la definición y la clase es estadísticamente significativa ($\chi^2=23.30$, $p=3.5\times10^{-5}$), pero muy débil ($V$ de Cramér $=0.07$), por lo que la calidad del video no parece estar directamente relacionada con la clasificación de contenido.
 
 \begin{figure}[!t]
@@ -257,6 +271,13 @@ Título, palabras & 10.04 & 8.12 & 7.79 & 10.91 \\
 \textit{Títulos.} Los títulos tienen en promedio 53.74 caracteres y 9.34 palabras. Los títulos de \textit{suitable} tienen la mayor longitud media (61.88 caracteres) y cantidad media de palabras (10.91), seguidos por los de \textit{disturbing}, mientras que \textit{restricted} presenta los títulos más cortos en promedio (Tabla~\ref{tab:clase}). La longitud del título podría ser una característica discriminante.
 
 \textit{Etiquetas (tags).} 3,914 videos tienen tags y 883 (18.4\%) no tienen. Esos registros contienen 3,705 listas de tags distintas; al separar cada lista por \texttt{|} (eliminando espacios y cadenas vacías) se obtienen 40,096 tags individuales únicos y 73,640 asignaciones en total (18.8 tags por video en promedio). Al normalizar a minúsculas se consolidan 36,750 tags únicos, y la Tabla~\ref{tab:tags} usa esta versión, contando cada tag una sola vez por video. Al cruzar los tags individuales más frecuentes con la clase se observan asociaciones marcadas: el 74.6\% de los videos con el tag \textit{spiderman} son \textit{disturbing}, frente al 19.4\% en todo el ground truth, mientras que el 80.1\% de los videos con \textit{for kids} son \textit{suitable}, frente al 31.5\%. Los tags \textit{spiderman}, \textit{superhero}, \textit{elsa} y \textit{frozen} se distribuyen en 181, 133, 171 y 169 canales distintos, respectivamente, y el canal con más videos de cada uno aporta menos del 4\% del total, por lo que su asociación con \textit{disturbing} no depende de un solo canal. En cambio, para \textit{kids} (412 videos en 270 canales) y \textit{children} (215 videos en 129 canales), un único canal, el mismo que aparece con clases mixtas en la Sección~\ref{sec:leak}, aporta el 7.3\% y el 14.4\% de los videos, respectivamente. Estas asociaciones son descriptivas; en entrenamiento, \textit{spiderman}, \textit{superhero} y \textit{elsa} aparecen entre los tags más asociados a \textit{disturbing} (Tabla~\ref{tab:terms}).
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{images/tags_frecuentes_groundtruth.png}
+\caption{Tags individuales más frecuentes por clase (top 10 por clase, contando cada tag una vez por video).}
+\label{fig:tags}
+\end{figure}
 
 \begin{table}[!t]
 \caption{Tags individuales frecuentes (en minúsculas): \% de videos por clase}
@@ -408,7 +429,7 @@ No se usan como características \texttt{prediction} e \texttt{is\_ground\_truth
 % METODOLOGÍA Y MODELOS  [LEO]
 % =====================================================================
 \section{Metodología y Modelos}\label{sec:metodologia}
-Todos los modelos se implementaron con scikit-learn~\cite{sklearn} y LightGBM~\cite{lightgbm} como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
+Todos los modelos se implementaron con scikit-learn~\cite{sklearn} y LightGBM~\cite{lightgbm} como un \texttt{Pipeline} que contiene el preprocesamiento de la Sección~\ref{sec:prep} y el clasificador, y se evaluaron con las mismas particiones agrupadas por canal (Sección~\ref{sec:validacion}). El código completo, los folds fijos y los reportes de experimentos están disponibles en el repositorio público del proyecto~\cite{urbina2026machinelearning}. Se usan tres vistas de las características: \textit{texto} (TF-IDF de título, descripción y tags), \textit{metadatos} (duración, interacción, razones, longitud del título y variables categóricas) y \textit{combinada} (ambas concatenadas).
 
 \subsection{Modelos baseline}\label{sec:baseline}
 \begin{itemize}
