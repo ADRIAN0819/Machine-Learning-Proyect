@@ -7,6 +7,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{url}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{multirow}
@@ -350,7 +351,7 @@ Se analizó la correlación entre las variables numéricas (Pearson en escala or
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{images/correlacion_spearman_groundtruth.png}
+\includegraphics[width=0.85\columnwidth]{images/correlacion_spearman_groundtruth.png}
 \caption{Correlación de Spearman entre las variables numéricas (los valores de Pearson en escala $\log(1+x)$ se reportan en el texto).}
 \label{fig:corr_spearman}
 \end{figure}
@@ -379,7 +380,7 @@ Los conjuntos adicionales se analizaron solo con las primeras 1,000 líneas de u
 % PREPROCESAMIENTO E INGENIERÍA DE CARACTERÍSTICAS  [MARIELA]
 % =====================================================================
 \section{Preprocesamiento e Ingeniería de Características}\label{sec:prep}
-El preprocesamiento se implementó en \texttt{data\_processing/preprocessing.py} y genera \texttt{dataset\_features\_v1.csv}, con los 4,797 videos del ground truth, 16 características, la etiqueta y tres columnas de metadatos (\texttt{video\_id}, \texttt{channel\_id} y \texttt{split}) que no se usan como características. Para evitar fuga de datos, todos los valores que se aprenden de los datos (medianas, modas y vocabularios) se ajustan solo con el conjunto de entrenamiento.
+El script \texttt{data\_processing/preprocessing.py} implementa el preprocesamiento y genera el archivo \texttt{dataset\_features\_v1.csv}, con los 4,797 videos del ground truth, 16 características, la etiqueta y tres columnas de metadatos (\texttt{video\_id}, \texttt{channel\_id} y \texttt{split}) que no se usan como características. Para evitar fuga de datos, todos los valores que se aprenden de los datos (medianas, modas y vocabularios) se ajustan solo con el conjunto de entrenamiento.
 
 \subsection{Partición previa}
 Antes de transformar los datos se reservó el conjunto de prueba con \texttt{StratifiedGroupKFold} (5 particiones, semilla 42), estratificando por clase y agrupando por \texttt{channel\_id}, y se tomó la primera partición como prueba: 3,842 videos de entrenamiento y 955 de prueba (19.9\%), sin canales en común (Sección~\ref{sec:leak}). Así, las estadísticas de imputación no incorporan información del conjunto de prueba.
@@ -602,22 +603,22 @@ La Fig.~\ref{fig:roc} muestra las curvas ROC y la Fig.~\ref{fig:pr} las curvas P
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.85\columnwidth]{images/roc_curves.png}
+\includegraphics[width=0.8\columnwidth]{images/roc_curves.png}
 \caption{Curvas ROC one-vs-rest. AUC macro = 0.914.}
 \label{fig:roc}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.85\columnwidth]{images/pr_curves.png}
+\includegraphics[width=0.8\columnwidth]{images/pr_curves.png}
 \caption{Curvas Precision-Recall. AP macro = 0.772. La clase \textit{restricted} muestra la mayor caída por su bajo soporte (80 videos en test).}
 \label{fig:pr}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.85\columnwidth]{images/confusion_matrix.png}
-\caption{Matriz de confusión sobre el conjunto de prueba: conteos absolutos (izquierda) y normalizada por fila (derecha).}
+\includegraphics[width=0.7\columnwidth]{images/confusion_matrix.png}
+\caption{Matriz de confusión sobre el conjunto de prueba, normalizada por fila (recall por celda); entre paréntesis, el número de videos.}
 \label{fig:cm}
 \end{figure}
 
@@ -766,6 +767,8 @@ Los resultados obtenidos sugieren las siguientes líneas de mejora:
 % =====================================================================
 \bibliographystyle{IEEEtran}
 \nocite{urbina2026machinelearning}
+{\raggedright
 \bibliography{references}
+}
 
 \end{document}
