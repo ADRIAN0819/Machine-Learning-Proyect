@@ -118,9 +118,9 @@ No es necesario descargar nada: al clonar el repositorio, los scripts y notebook
 | Interpretabilidad y errores | Mafer | ✅ Completo | `modeling/interpretability.py`, `reports/interpretability.md`, figuras SHAP |
 | Pruebas en datasets adicionales | Adrián | ✅ Completo | `modeling/additional_inference.py`, `reports/additional_consistency.md` |
 | Discusión, ética y limitaciones | Adrián | ✅ Completo | Secciones VII y VIII del paper (`latex/InformeP1.tex`) |
-| Redacción e integración del paper | Mariela (coord.) | ✅ Borrador completo | `latex/InformeP1.tex`: 10 secciones, 12 páginas IEEE (pendiente revisión final del equipo) |
+| Redacción e integración del paper | Mariela (coord.) | ✅ Completo | `latex/InformeP1.tex`: 10 secciones, 12 páginas IEEE (pendiente revisión final del equipo) |
 | Repositorio y reproducibilidad | Leo | ✅ Completo | README, `requirements.txt`, secuencia de reproducción |
-| Presentación P2 | Todo el equipo | ⏳ Pendiente | Slides + guión ensayado |
+| Presentación P2 | Todo el equipo | ✅ Completo | Slides |
 
 ---
 
