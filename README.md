@@ -49,10 +49,10 @@ Repositorio para la clasificación y detección de videos inapropiados o perturb
   * `evaluation.py`: Curvas ROC/PR, matriz de confusión y tabla de métricas completa; genera `reports/evaluation.md` y las figuras en `reports/figures/`. Si `models/final.joblib` no existe lo re-entrena automáticamente.
   * `interpretability.py`: SHAP values con `LinearExplainer`, importancia de features por clase e análisis cualitativo de falsos negativos/positivos; genera `reports/interpretability.md` y figuras SHAP en `reports/figures/`.
   * `additional_inference.py`: Aplica el modelo final a los conjuntos adicionales (sin videos del ground truth) y lo compara con el clasificador original (PI2 y PI3); genera `reports/additional_consistency.md` y `outputs/additional_predictions.csv.gz` (este último excluido de git).
-* `latex/`: Informe en formato IEEE (`InformeP1.tex`, `references.bib`, `images/`).
   * `reports/`: Reportes Markdown generados automáticamente por los scripts anteriores.
   * `reports/figures/`: Figuras PNG (ROC, PR, matriz de confusión, SHAP) listas para el paper IEEE.
   * `models/`: Modelo final serializado (`final.joblib`, ~2.5 MB). Excluido de git por `.gitignore`; regenerar con `python -m modeling.tuning` o `python -m modeling.evaluation`.
+* `latex/`: Informe en formato IEEE (`InformeP2.tex`, `InformeP2.pdf` compilado, `references.bib`, `images/`).
 * `dataset_disturbed_youtube _for_kids/`: Directorio con datos tabulares y scripts de conversión.
   * `convert_json_to_csv.py`: Script de utilidad para transformar los archivos JSON crudos a formato CSV.
   * `dataset_groundtruth.csv`: Dataset principal anotado manualmente por humanos (4,797 videos, 4 clases).
@@ -117,10 +117,10 @@ No es necesario descargar nada: al clonar el repositorio, los scripts y notebook
 | Evaluación y métricas | Mafer | ✅ Completo | `modeling/evaluation.py`, `reports/evaluation.md`, figuras ROC/PR/CM |
 | Interpretabilidad y errores | Mafer | ✅ Completo | `modeling/interpretability.py`, `reports/interpretability.md`, figuras SHAP |
 | Pruebas en datasets adicionales | Adrián | ✅ Completo | `modeling/additional_inference.py`, `reports/additional_consistency.md` |
-| Discusión, ética y limitaciones | Adrián | ✅ Completo | Secciones VII y VIII del paper (`latex/InformeP1.tex`) |
-| Redacción e integración del paper | Mariela (coord.) | ✅ Completo | `latex/InformeP1.tex`: 10 secciones, 12 páginas IEEE (pendiente revisión final del equipo) |
+| Discusión, ética y limitaciones | Adrián | ✅ Completo | Sección VII del paper (`latex/InformeP2.tex`) |
+| Redacción e integración del paper | Mariela (coord.) | ✅ Completo | `latex/InformeP2.tex` y `latex/InformeP2.pdf`: estructura de la guía (resumen, 8 secciones y referencias), 12 páginas IEEE |
 | Repositorio y reproducibilidad | Leo | ✅ Completo | README, `requirements.txt`, secuencia de reproducción |
-| Presentación P2 | Todo el equipo | ✅ Completo | Slides |
+| Presentación P2 | Todo el equipo | ⏳ Pendiente | Slides en PDF (máx. 10 min) |
 
 ---
 
@@ -181,17 +181,17 @@ El modelo final se aplicó a 839,905 videos que **no** están en el ground truth
 | random | 462,382 | 6.74 | 0.73 | 0.000 |
 | popular | 9,607 | 12.00 | 0.00 | 0.000 |
 
-El modelo conserva el orden de riesgo esperado (Elsagate > aleatorios), pero genera muchas más alertas que el clasificador original, sobre todo en `restricted` sobre contenido popular no infantil (H2 y H3 no se cumplen). Detalle en `modeling/reports/additional_consistency.md` y en la Sección VI.D del informe.
+El modelo conserva el orden de riesgo esperado (Elsagate > aleatorios), pero genera muchas más alertas que el clasificador original, sobre todo en `restricted` sobre contenido popular no infantil (H2 y H3 no se cumplen). Detalle en `modeling/reports/additional_consistency.md` y en la Sección VI-E del informe.
 
 ---
 
 ## Informe (paper IEEE)
 
-* `latex/InformeP1.tex`: informe completo de la Etapa 2 (12 páginas, plantilla IEEE de conferencias), con `latex/references.bib` y las figuras en `latex/images/`.
+* `latex/InformeP2.tex`: informe completo de la Etapa 2 (12 páginas, plantilla IEEE de conferencias), con `latex/references.bib` y las figuras en `latex/images/`. La versión compilada es `latex/InformeP2.pdf`.
 * Compilar desde `latex/` (o subir la carpeta a Overleaf):
   ```bash
   cd latex
-  pdflatex InformeP1.tex && bibtex InformeP1 && pdflatex InformeP1.tex && pdflatex InformeP1.tex
+  pdflatex InformeP2.tex && bibtex InformeP2 && pdflatex InformeP2.tex && pdflatex InformeP2.tex
   ```
 * Las figuras y tablas del EDA que no entraron en el límite de 12 páginas siguen en `exploratory_data_analysis/images/` y `exploratory_data_analysis/EDA.md`.
 
